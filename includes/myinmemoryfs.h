@@ -8,10 +8,14 @@
 
 #include <fuse.h>
 #include <cmath>
+#include <map>
+#include <string>
 
 #include "myfs.h"
 #include "blockdevice.h"
 #include "myfs-structs.h"
+
+#include "File.h"
 
 /// @brief In-memory implementation of a simple file system.
 class MyInMemoryFS : public MyFS {
@@ -22,6 +26,8 @@ public:
     static MyInMemoryFS *Instance();
 
     // TODO: [PART 1] Add attributes of your file system here
+    std::map<std::string, File> files;
+    int openFileCount;
 
     MyInMemoryFS();
     ~MyInMemoryFS();
