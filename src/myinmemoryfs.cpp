@@ -66,8 +66,15 @@ MyInMemoryFS::~MyInMemoryFS() {
 /// \return 0 on success, -ERRNO on failure.
 int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
+    std::map<std::string,File>::iterator it;
+    it = files.find(path);
+    if(it == files.end()){
+        File file(path,mode);
+        files.insert(std::make_pair(path,file));
+    }
+    else
+        RETURN(-EEXIST)
 
-    // TODO: [PART 1] Implement this!
 
     RETURN(0);
 }
@@ -80,8 +87,14 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
 /// \return 0 on success, -ERRNO on failure.
 int MyInMemoryFS::fuseUnlink(const char *path) {
     LOGM();
+    std::map<std::string,File>::iterator it;
+    it = files.find(path);
+    if(it != files.end()){
+        files.erase(it);
+    }
+    else
+    RETURN(-ENOENT)
 
-    // TODO: [PART 1] Implement this!
 
     RETURN(0);
 }
@@ -130,8 +143,9 @@ int MyInMemoryFS::fuseGetattr(const char *path, struct stat *statbuf) {
     //		st_size:	This specifies the size of a regular file in bytes. For files that are really devices this field
     //		            isn’t usually meaningful. For symbolic links this specifies the length of the file name the link
     //		            refers to.
-
-    statbuf->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
+    //
+    //
+    /*    statbuf->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
     statbuf->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
     statbuf->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
     statbuf->st_mtime = time( NULL ); // The last "m"odification of the file/directory is right now
@@ -150,9 +164,34 @@ int MyInMemoryFS::fuseGetattr(const char *path, struct stat *statbuf) {
         statbuf->st_size = 1024;
     }
     else
+        ret= -ENOENT;*/
+
+
+    std::map<std::string,File>::iterator it;
+    int ret= 0;
+    if ( strcmp( path, "/" ) == 0 )
+    {
+        statbuf->st_mode = S_IFDIR | 0755;
+        statbuf->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+    }
+    it = files.find(path);
+    if(it != files.end()){
+        statbuf->st_uid = it->second.getUserId(); // The owner of the file/directory is the user who mounted the filesystem
+        statbuf->st_gid = it->second.getGroupId(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+        statbuf->st_atime = it->second.getAtime(); // The last "a"ccess of the file/directory is right now
+        statbuf->st_mtime = it->second.getMtime(); // The last "m"odification of the file/directory is right now
+        statbuf->st_mode = it->second.getMode();
+        statbuf->st_nlink = 1;
+        statbuf->st_size = it->second.getSize();
+
+    }
+    else
         ret= -ENOENT;
 
     RETURN(ret);
+
+
+
 }
 
 /// @brief Change file permissions.
