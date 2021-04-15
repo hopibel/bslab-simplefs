@@ -69,13 +69,12 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
     std::map<std::string,File>::iterator it;
     it = files.find(path);
-    if(it == files.end()){
-        File file(path,mode);
-        files.insert(std::make_pair(path,file));
+    if(it == files.end()) {
+        File file(path, mode);
+        files.insert(std::make_pair(path, file));
+    } else {
+        RETURN(-EEXIST);
     }
-    else
-        RETURN(-EEXIST)
-
 
     RETURN(0);
 }
@@ -388,17 +387,17 @@ int MyInMemoryFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t fille
 
     // TODO: [PART 1] Implement this!
 
-    LOGF( "--> Getting The List of Files of %s\n", path );
+    LOGF( "--> Getting The List of Files of %s", path );
 
-    filler( buf, ".", NULL, 0 ); // Current Directory
-    filler( buf, "..", NULL, 0 ); // Parent Directory
+    filler( buf, ".", nullptr, 0 ); // Current Directory
+    filler( buf, "..", nullptr, 0 ); // Parent Directory
 
-    if ( strcmp( path, "/" ) == 0 ) // If the user is trying to show the files/directories of the root directory show the following
+    if (std::string(path) == "/") // If the user is trying to show the files/directories of the root directory list all files
     {
-        /*
-        filler( buf, "file54", NULL, 0 );
-        filler( buf, "file349", NULL, 0 );
-         */
+        for (auto it : files) {
+            LOGF("%s", it.second.getName().c_str());
+            filler(buf, it.second.getName().c_str(), nullptr, 0);
+        }
     }
 
     RETURN(0);

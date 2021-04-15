@@ -26,7 +26,7 @@ public:
     static MyInMemoryFS *Instance();
 
     // TODO: [PART 1] Add attributes of your file system here
-    std::map<std::string, File> files;
+    std::map<std::string, File> files; // path (mit /) als Schlüssel
     int openFileCount;
 
     MyInMemoryFS();

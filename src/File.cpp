@@ -8,11 +8,7 @@
 #include <errno.h>
 
 File::File(const char *path, mode_t mod){
-    std::string filename = path;
-    if(filename[0]=='/'){
-        filename.substr(1, std::string::npos);
-    }
-    name = filename;
+    name = path + 1;
     atime = time(nullptr);
     mtime = time(nullptr);
     uid = getuid();
