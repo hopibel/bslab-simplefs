@@ -188,7 +188,7 @@ int MyInMemoryFS::fuseGetattr(const char *path, struct stat *statbuf) {
         statbuf->st_gid = file.getGroupId(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
         statbuf->st_atime = file.getAtime(); // The last "a"ccess of the file/directory is right now
         statbuf->st_mtime = file.getMtime(); // The last "m"odification of the file/directory is right now
-        statbuf->st_mode = file.getMode();
+        statbuf->st_mode = S_IFDIR | file.getMode();
         statbuf->st_nlink = 1;
         statbuf->st_size = file.getSize();
     } else {
