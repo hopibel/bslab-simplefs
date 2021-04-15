@@ -37,6 +37,7 @@
 #include "myfs.h"
 #include "myfs-info.h"
 #include "blockdevice.h"
+#include "../includes/myinmemoryfs.h"
 
 /// @brief Constructor of the in-memory file system class.
 ///
@@ -240,7 +241,19 @@ int MyInMemoryFS::fuseChown(const char *path, uid_t uid, gid_t gid) {
 int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    // zu viele geöffnete Dateien
+    if (openFileCount >= NUM_OPEN_FILES) {
+        LOGF("Too many open files (%d)", NUM_OPEN_FILES);
+        RETURN(-EMFILE);
+    }
+
+    auto it = files.find(path);
+    if (it != files.end()) {
+        ++openFileCount;
+    } else {
+        // Datei nicht gefunden
+        RETURN(-ENOENT);
+    }
 
     RETURN(0);
 }
