@@ -145,7 +145,9 @@ int MyInMemoryFS::fuseGetattr(const char *path, struct stat *statbuf) {
     //		            refers to.
     //
     //
-    /*    statbuf->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
+
+    /*
+    statbuf->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
     statbuf->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
     statbuf->st_atime = time( NULL ); // The last "a"ccess of the file/directory is right now
     statbuf->st_mtime = time( NULL ); // The last "m"odification of the file/directory is right now
@@ -164,34 +166,36 @@ int MyInMemoryFS::fuseGetattr(const char *path, struct stat *statbuf) {
         statbuf->st_size = 1024;
     }
     else
-        ret= -ENOENT;*/
+        ret= -ENOENT;
+    */
 
-
-    std::map<std::string,File>::iterator it;
-    int ret= 0;
-    if ( strcmp( path, "/" ) == 0 )
-    {
+    if ( strcmp( path, "/" ) == 0 ) {
+        statbuf->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
+        statbuf->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+        statbuf->st_atime = time(nullptr); // The last "a"ccess of the file/directory is right now
+        statbuf->st_mtime = time(nullptr); // The last "m"odification of the file/directory is right now
         statbuf->st_mode = S_IFDIR | 0755;
         statbuf->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+        RETURN(0);
     }
-    it = files.find(path);
-    if(it != files.end()){
-        statbuf->st_uid = it->second.getUserId(); // The owner of the file/directory is the user who mounted the filesystem
-        statbuf->st_gid = it->second.getGroupId(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
-        statbuf->st_atime = it->second.getAtime(); // The last "a"ccess of the file/directory is right now
-        statbuf->st_mtime = it->second.getMtime(); // The last "m"odification of the file/directory is right now
-        statbuf->st_mode = it->second.getMode();
-        statbuf->st_nlink = 1;
-        statbuf->st_size = it->second.getSize();
 
+    int ret = 0;
+    auto it = files.find(path);
+    if (it != files.end()) {
+        // gespeicherte Attribute zurückgeben
+        auto& file = it->second;
+        statbuf->st_uid = file.getUserId(); // The owner of the file/directory is the user who mounted the filesystem
+        statbuf->st_gid = file.getGroupId(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+        statbuf->st_atime = file.getAtime(); // The last "a"ccess of the file/directory is right now
+        statbuf->st_mtime = file.getMtime(); // The last "m"odification of the file/directory is right now
+        statbuf->st_mode = file.getMode();
+        statbuf->st_nlink = 1;
+        statbuf->st_size = file.getSize();
+    } else {
+        ret = -ENOENT;
     }
-    else
-        ret= -ENOENT;
 
     RETURN(ret);
-
-
-
 }
 
 /// @brief Change file permissions.
@@ -378,8 +382,10 @@ int MyInMemoryFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t fille
 
     if ( strcmp( path, "/" ) == 0 ) // If the user is trying to show the files/directories of the root directory show the following
     {
+        /*
         filler( buf, "file54", NULL, 0 );
         filler( buf, "file349", NULL, 0 );
+         */
     }
 
     RETURN(0);
