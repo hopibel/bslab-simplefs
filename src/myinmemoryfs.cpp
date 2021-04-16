@@ -282,6 +282,29 @@ int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
 /// -ERRNO on failure.
 int MyInMemoryFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
+    auto it = files.find(path);
+    if (it != files.end()) {
+        auto& file = it->second;
+        auto fileSize = file.getSize();
+        auto data = file.getDataPtr();
+        if(offset > fileSize){
+            LOG("Offset groeßer als Laenge der Datei");
+            RETURN(0);
+        }
+        if(offset + size <= fileSize ){
+            memcpy(buf,data + offset,fileSize - offset);
+            RETURN((int)(fileSize- offset));
+        }
+        else{
+            memcpy(buf,data + offset,size);
+            RETURN((int)size);
+        }
+
+
+    } else {
+        LOGF("File Not found: %s",path+1);
+        RETURN(-ENOENT);
+    }
 
     // TODO: [PART 1] Implement this!
 
@@ -338,8 +361,16 @@ int MyInMemoryFS::fuseWrite(const char *path, const char *buf, size_t size, off_
 /// \return 0 on success, -ERRNO on failure.
 int MyInMemoryFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
-
-    // TODO: [PART 1] Implement this!
+    auto it = files.find(path);
+    if (it != files.end()) {
+        LOGF("%s gelöscht\n",path +1);
+        files.erase(it);
+        openFileCount--;
+    }
+    else{
+        RETURN(-ENOENT);
+    }
+    // TODO: können wir davon ausgehen das nur offene files gelöscht werden können? !
 
     RETURN(0);
 }

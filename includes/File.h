@@ -18,6 +18,7 @@ public:
     uid_t  getUserId(){return uid;}
     gid_t  getGroupId(){return gid;}
     mode_t getMode(){return mode;}
+    char* getDataPtr(){return data.data();}
     void setAtime();
     void setMtime();
     void setUserId(uid_t t);
