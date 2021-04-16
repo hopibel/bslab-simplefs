@@ -67,6 +67,12 @@ MyInMemoryFS::~MyInMemoryFS() {
 /// \return 0 on success, -ERRNO on failure.
 int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
+    if(files.size() > NUM_DIR_ENTRIES){
+        RETURN(-ENOSPC);
+    }
+    if(strlen(path)>NAME_LENGTH){
+        RETURN(-EINVAL);
+    }
     std::map<std::string,File>::iterator it;
     it = files.find(path);
     if(it == files.end()) {
