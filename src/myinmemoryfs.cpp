@@ -94,14 +94,12 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
 /// \return 0 on success, -ERRNO on failure.
 int MyInMemoryFS::fuseUnlink(const char *path) {
     LOGM();
-    std::map<std::string,File>::iterator it;
-    it = files.find(path);
-    if(it != files.end()){
+    auto it = files.find(path);
+    if (it != files.end()) {
         files.erase(it);
+    } else {
+        RETURN(-ENOENT);
     }
-    else
-    RETURN(-ENOENT)
-
 
     RETURN(0);
 }
