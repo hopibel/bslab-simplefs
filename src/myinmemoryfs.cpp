@@ -242,52 +242,20 @@ int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
 /// -ERRNO on failure.
 int MyInMemoryFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
+    LOGF( "--> Trying to read %s, %lu, %lu\n", path, (unsigned long) offset, size );
     auto it = files.find(path);
     if (it != files.end()) {
         auto& file = it->second;
-        auto fileSize = file.getSize();
-        auto data = file.getDataPtr();
-        if(offset > fileSize){
-            LOG("Offset groeßer als Laenge der Datei");
-            RETURN(0);
-        }
-        if(offset + size <= fileSize ){
-            memcpy(buf,data + offset,fileSize - offset);
-            RETURN((int)(fileSize- offset));
-        }
-        else{
-            memcpy(buf,data + offset,size);
-            RETURN((int)size);
-        }
-
+        auto ret = file.read(buf,size, offset);
+        RETURN(ret);
 
     } else {
         LOGF("File Not found: %s",path+1);
         RETURN(-ENOENT);
     }
 
-    // TODO: [PART 1] Implement this!
 
-    LOGF( "--> Trying to read %s, %lu, %lu\n", path, (unsigned long) offset, size );
 
-    char file54Text[] = "Hello World From File54!\n";
-    char file349Text[] = "Hello World From File349!\n";
-    char *selectedText = NULL;
-
-    // ... //
-
-    if ( strcmp( path, "/file54" ) == 0 )
-        selectedText = file54Text;
-    else if ( strcmp( path, "/file349" ) == 0 )
-        selectedText = file349Text;
-    else
-        return -ENOENT;
-
-    // ... //
-
-    memcpy( buf, selectedText + offset, size );
-
-    RETURN((int) (strlen( selectedText ) - offset));
 }
 
 /// @brief Write to a file.

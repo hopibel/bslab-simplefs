@@ -18,7 +18,6 @@ public:
     uid_t  getUserId(){return uid;}
     gid_t  getGroupId(){return gid;}
     mode_t getMode(){return mode;}
-    char* getDataPtr(){return data.data();}
     void setAtime();
     void setMtime();
     void setUserId(uid_t t);
@@ -27,6 +26,7 @@ public:
     void setName(const char *p);
 
     int write(const char *buf, size_t size, off_t offset);
+    int read(char *buf, size_t size, off_t offset);
 
 private:
     std::string name; // path ohne '/'

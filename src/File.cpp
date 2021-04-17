@@ -50,3 +50,21 @@ int File::write(const char *buf, size_t size, off_t offset) {
     std::copy_n(buf, size, data.begin() + offset);
     return size;
 }
+int File::read( char *buf, size_t size, off_t offset) {
+    // update Accesstime
+    setAtime();
+
+    if(offset > getSize()){
+    // Offset größer als File
+        return 0;
+    }
+    if(offset + size <= getSize() ){
+
+        std::copy(data.begin() + offset, data.begin() + offset + size, buf);
+        return size;
+    }
+    else{
+        std::copy(data.begin() + offset,data.end(),buf);
+        return (getSize() - offset);
+    }
+}
