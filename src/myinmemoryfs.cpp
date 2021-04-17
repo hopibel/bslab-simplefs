@@ -366,11 +366,8 @@ int MyInMemoryFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo)
     LOGM();
     auto it = files.find(path);
     if (it != files.end()) {
-        LOGF("%s gelöscht\n",path +1);
-        files.erase(it);
         openFileCount--;
-    }
-    else{
+    } else {
         RETURN(-ENOENT);
     }
     // TODO: können wir davon ausgehen das nur offene files gelöscht werden können? !
