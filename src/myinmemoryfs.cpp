@@ -77,6 +77,7 @@ int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     it = files.find(path);
     if(it == files.end()) {
         File file(path, mode);
+        LOGF("Created %s with mode: %o", path, mode);
         files.insert(std::make_pair(path, file));
     } else {
         RETURN(-EEXIST);
@@ -195,6 +196,7 @@ int MyInMemoryFS::fuseGetattr(const char *path, struct stat *statbuf) {
         statbuf->st_atime = file.getAtime(); // The last "a"ccess of the file/directory is right now
         statbuf->st_mtime = file.getMtime(); // The last "m"odification of the file/directory is right now
         statbuf->st_mode = file.getMode();
+        LOGF("Permissions: %o", file.getMode());
         statbuf->st_nlink = 1;
         statbuf->st_size = file.getSize();
     } else {
