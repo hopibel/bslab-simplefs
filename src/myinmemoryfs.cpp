@@ -245,6 +245,7 @@ int MyInMemoryFS::fuseRead(const char *path, char *buf, size_t size, off_t offse
     LOGF( "--> Trying to read %s, %lu, %lu\n", path, (unsigned long) offset, size );
     auto it = files.find(path);
     if (it != files.end()) {
+
         auto& file = it->second;
         auto ret = file.read(buf,size, offset);
         RETURN(ret);
