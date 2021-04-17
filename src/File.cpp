@@ -23,7 +23,7 @@ void File::setAtime(){
 void File::setMtime(){
     this->mtime=time(nullptr);
 }
-oid File::setCtime(){
+void File::setCtime(){
     this->ctime=time(nullptr);
 }
 void File::setUserId(uid_t t){

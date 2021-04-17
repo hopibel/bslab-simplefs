@@ -171,10 +171,16 @@ int MyInMemoryFS::fuseGetattr(const char *path, struct stat *statbuf) {
 /// \return 0 on success, -ERRNO on failure.
 int MyInMemoryFS::fuseChmod(const char *path, mode_t mode) {
     LOGM();
+    auto it = files.find(path);
+    if (it != files.end()) {
+        it->second.setMode(mode);
+        it->second.setCtime();
+        LOGF("Changed permissions of %s to: %d",path,mode);
+        RETURN(0);
+    }
+    else
+        RETURN(-ENOENT);
 
-    // TODO: [PART 1] Implement this!
-
-    RETURN(0);
 }
 
 /// @brief Change the owner of a file.
