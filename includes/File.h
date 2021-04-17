@@ -25,6 +25,9 @@ public:
     void setGroupId(gid_t t);
     void setMode(mode_t m);
     void setName(const char *p);
+
+    int write(const char *buf, size_t size, off_t offset);
+
 private:
     std::string name; // path ohne '/'
     std::vector<char> data;

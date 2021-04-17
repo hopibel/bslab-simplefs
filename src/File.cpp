@@ -4,6 +4,7 @@
 
 #include "File.h"
 
+#include <algorithm>
 #include <unistd.h>
 #include <errno.h>
 
@@ -36,4 +37,16 @@ void File::setName(const char* p){
         filename.substr(1, std::string::npos);
     }
     this->name = filename;
+}
+
+int File::write(const char *buf, size_t size, off_t offset) {
+    // update mtime
+    setMtime();
+
+    // resize if writing past end of file
+    if (offset + size > getSize()) {
+        data.resize(offset + size, 0); // fill empty with null bytes
+    }
+    std::copy_n(buf, size, data.begin() + offset);
+    return size;
 }

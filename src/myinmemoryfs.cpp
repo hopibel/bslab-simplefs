@@ -194,7 +194,7 @@ int MyInMemoryFS::fuseGetattr(const char *path, struct stat *statbuf) {
         statbuf->st_gid = file.getGroupId(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
         statbuf->st_atime = file.getAtime(); // The last "a"ccess of the file/directory is right now
         statbuf->st_mtime = file.getMtime(); // The last "m"odification of the file/directory is right now
-        statbuf->st_mode = S_IFDIR | file.getMode();
+        statbuf->st_mode = file.getMode();
         statbuf->st_nlink = 1;
         statbuf->st_size = file.getSize();
     } else {
@@ -349,8 +349,11 @@ int MyInMemoryFS::fuseWrite(const char *path, const char *buf, size_t size, off_
     LOGM();
 
     // TODO: [PART 1] Implement this!
+    // file schon geöffnet, also existiert
+    File& file = files.find(path)->second;
+    int written = file.write(buf, size, offset);
 
-    RETURN(0);
+    RETURN(written);
 }
 
 /// @brief Close a file.
