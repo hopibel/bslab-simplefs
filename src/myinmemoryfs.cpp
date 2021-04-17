@@ -329,11 +329,20 @@ int MyInMemoryFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo)
 /// \param [in] newSize New size of the file.
 /// \return 0 on success, -ERRNO on failure.
 int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize) {
-    LOGM();
+    auto it = files.find(path);
+    if (it != files.end()) {
+        it->second.setMtime();
+        it->second.setCtime();
+        it->second.truncate(newSize);
+        LOGF("Changed Size of %s to: %d",path,newSize);
+        RETURN(0);
+    }
+    else {
+        LOG("Datei nicht gefunden");
+        RETURN(-ENOENT);
 
-    // TODO: [PART 1] Implement this!
+    }
 
-    return 0;
 }
 
 /// @brief Truncate a file.
@@ -348,10 +357,21 @@ int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize) {
 /// \return 0 on success, -ERRNO on failure.
 int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize, struct fuse_file_info *fileInfo) {
     LOGM();
+    auto it = files.find(path);
+    if (it != files.end()) {
+        it->second.setMtime();
+        it->second.setCtime();
+        it->second.truncate(newSize);
+        LOGF("Changed Size of %s to: %d",path,newSize);
+        RETURN(0);
+    }
+    else {
+        LOG("Datei nicht gefunden");
+        RETURN(-ENOENT);
+
+    }
 
     // TODO: [PART 1] Implement this!
-
-    RETURN(0);
 }
 
 /// @brief Read a directory.

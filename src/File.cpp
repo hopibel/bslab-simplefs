@@ -74,3 +74,10 @@ int File::read( char *buf, size_t size, off_t offset) {
         return (getSize() - offset);
     }
 }
+void File::truncate(off_t newSize) {
+    // update mtime
+    setMtime();
+    // update ctime
+    setCtime();
+    data.resize(newSize,0);
+}

@@ -29,6 +29,7 @@ public:
 
     int write(const char *buf, size_t size, off_t offset);
     int read(char *buf, size_t size, off_t offset);
+    void truncate(off_t newSize);
 
 private:
     std::string name; // path ohne '/'
