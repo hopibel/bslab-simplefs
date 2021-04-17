@@ -14,7 +14,7 @@ File::File(const char *path, mode_t mod){
     mtime = time(nullptr);
     uid = getuid();
     gid = getgid();
-    this->mode = mode;
+    this->mode = mod;
 }
 void File::setAtime(){
     this->atime=time(nullptr);
