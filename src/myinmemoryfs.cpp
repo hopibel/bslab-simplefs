@@ -178,9 +178,11 @@ int MyInMemoryFS::fuseChmod(const char *path, mode_t mode) {
         LOGF("Changed permissions of %s to: %d",path,mode);
         RETURN(0);
     }
-    else
+    else {
+        LOG("Datei nicht gefunden");
         RETURN(-ENOENT);
 
+    }
 }
 
 /// @brief Change the owner of a file.
@@ -192,12 +194,22 @@ int MyInMemoryFS::fuseChmod(const char *path, mode_t mode) {
 /// \param [in] gid New group id.
 /// \return 0 on success, -ERRNO on failure.
 int MyInMemoryFS::fuseChown(const char *path, uid_t uid, gid_t gid) {
-    LOGM();
-
-    // TODO: [PART 1] Implement this!
-
-    RETURN(0);
+    auto it = files.find(path);
+    if (it != files.end()) {
+        it->second.setGroupId(gid);
+        it->second.setUserId(uid);
+        it->second.setCtime();
+        LOGF("Changed UserID to: %d",uid);
+        LOGF("Changed GroupID to: %d",gid);
+        RETURN(0);
+    }
+    else {
+        LOG("Datei nicht gefunden");
+        RETURN(-ENOENT);
+    }
 }
+
+
 
 /// @brief Open a file.
 ///
@@ -220,7 +232,7 @@ int MyInMemoryFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
     if (it != files.end()) {
         ++openFileCount;
     } else {
-        // Datei nicht gefunden
+        LOG("Datei nicht gefunden");
         RETURN(-ENOENT);
     }
 
