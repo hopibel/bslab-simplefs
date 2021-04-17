@@ -12,6 +12,7 @@ File::File(const char *path, mode_t mod){
     name = path + 1;
     atime = time(nullptr);
     mtime = time(nullptr);
+    ctime = time(nullptr);
     uid = getuid();
     gid = getgid();
     this->mode = mod;
@@ -21,6 +22,9 @@ void File::setAtime(){
 }
 void File::setMtime(){
     this->mtime=time(nullptr);
+}
+oid File::setCtime(){
+    this->ctime=time(nullptr);
 }
 void File::setUserId(uid_t t){
     this->uid= t;
@@ -42,6 +46,8 @@ void File::setName(const char* p){
 int File::write(const char *buf, size_t size, off_t offset) {
     // update mtime
     setMtime();
+    // update ctime
+    setCtime();
 
     // resize if writing past end of file
     if (offset + size > getSize()) {
