@@ -4,6 +4,8 @@
 //
 
 #include "myinmemoryfs.h"
+#include <asm-generic/errno.h>
+#include <utility>
 
 // The functions fuseGettattr(), fuseRead(), and fuseReadDir() are taken from
 // an example by Mohammed Q. Hussain. Here are original copyrights & licence:
@@ -67,18 +69,17 @@ MyInMemoryFS::~MyInMemoryFS() {
 /// \return 0 on success, -ERRNO on failure.
 int MyInMemoryFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
-    if(files.size() > NUM_DIR_ENTRIES){
+    if (files.size() >= NUM_DIR_ENTRIES){
         RETURN(-ENOSPC);
     }
-    if(strlen(path)>NAME_LENGTH){
-        RETURN(-EINVAL);
+    if (strlen(path) > NAME_LENGTH){
+        RETURN(-ENAMETOOLONG);
     }
-    std::map<std::string,File>::iterator it;
-    it = files.find(path);
-    if(it == files.end()) {
+    auto it = files.find(path);
+    if (it == files.end()) {
         File file(path, mode);
+        files.insert({path, file});
         LOGF("Created %s with mode: %o", path, mode);
-        files.insert(std::make_pair(path, file));
     } else {
         RETURN(-EEXIST);
     }
