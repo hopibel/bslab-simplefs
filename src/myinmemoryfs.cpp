@@ -116,9 +116,19 @@ int MyInMemoryFS::fuseUnlink(const char *path) {
 int MyInMemoryFS::fuseRename(const char *path, const char *newpath) {
     LOGM();
 
-    // TODO: [PART 1] Implement this!
+    LOGF("Renaming %s to %s", path, newpath);
 
-    return 0;
+    auto it = files.find(path);
+    if (it != files.end()) {
+        auto value = std::move(it->second);
+        value.setName(newpath + 1);
+        files.erase(it);
+        files.insert({newpath, std::move(value)});
+    } else {
+        RETURN(-ENOENT);
+    }
+
+    RETURN(0);
 }
 
 /// @brief Get file meta data.
@@ -334,7 +344,7 @@ int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize) {
         it->second.setMtime();
         it->second.setCtime();
         it->second.truncate(newSize);
-        LOGF("Changed Size of %s to: %d",path,newSize);
+        LOGF("Changed Size of %s to: %ld", path, newSize);
         RETURN(0);
     }
     else {
@@ -362,7 +372,7 @@ int MyInMemoryFS::fuseTruncate(const char *path, off_t newSize, struct fuse_file
         it->second.setMtime();
         it->second.setCtime();
         it->second.truncate(newSize);
-        LOGF("Changed Size of %s to: %d",path,newSize);
+        LOGF("Changed Size of %s to: %ld", path, newSize);
         RETURN(0);
     }
     else {
