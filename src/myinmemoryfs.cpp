@@ -121,7 +121,7 @@ int MyInMemoryFS::fuseRename(const char *path, const char *newpath) {
     auto it = files.find(path);
     if (it != files.end()) {
         auto value = std::move(it->second);
-        value.setName(newpath + 1);
+        value.rename(newpath);
         files.erase(it);
         files.insert({newpath, std::move(value)});
     } else {

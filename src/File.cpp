@@ -60,7 +60,7 @@ int File::read( char *buf, size_t size, off_t offset) {
     // update Accesstime
     setAtime();
 
-    if(offset > getSize()){
+    if(static_cast<size_t>(offset) > getSize()){
     // Offset größer als File
         return 0;
     }
@@ -80,4 +80,10 @@ void File::truncate(off_t newSize) {
     // update ctime
     setCtime();
     data.resize(newSize,0);
+}
+
+void File::rename(const char *path) {
+    // update change time
+    setCtime();
+    name = path + 1;
 }
