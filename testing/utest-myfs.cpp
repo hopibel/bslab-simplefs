@@ -19,6 +19,7 @@
 #include <memory>
 #include <cstring>
 
+
 #define FILENAME "file"
 
 // TODO: Implement your helper functions here!
@@ -102,4 +103,31 @@ TEST_CASE("T-1.15", "[Part_1]") {
     delete []  r;
     delete []  w;
     delete stat;
+}
+
+TEST_CASE("T1.16","[Part_1]"){
+    printf("Testcase 1.13: fuseChown\n");
+    uid_t uid=1001;
+    gid_t gid=1001;
+    std::unique_ptr<MyInMemoryFS> memfs(new MyInMemoryFS());
+    struct stat* statbuf = new struct stat();
+    memfs->fuseMknod("/foo.txt", 0644, 0);
+    REQUIRE(memfs->fuseChown("/foo.txt",uid,gid)==0);
+    memfs->fuseGetattr("/foo.txt", statbuf);
+    REQUIRE(statbuf->st_gid==gid);
+    REQUIRE(statbuf->st_uid==uid);
+
+
+}
+TEST_CASE("T1.17","[Part_1]"){
+    printf("Testcase 1.13: fuseMode\n");
+    mode_t mode = 0666;
+
+    std::unique_ptr<MyInMemoryFS> memfs(new MyInMemoryFS());
+    struct stat* statbuf = new struct stat();
+    memfs->fuseMknod("/foo.txt", 0644, 0);
+    REQUIRE(memfs->fuseChmod("/foo.txt",mode)==0);
+    memfs->fuseGetattr("/foo.txt", statbuf);
+    REQUIRE(statbuf->st_mode==(S_IFREG |  mode));
+
 }
