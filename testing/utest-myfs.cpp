@@ -13,12 +13,12 @@
 #include "myfs.h"
 #include "myinmemoryfs.h"
 
+#include <string.h>
 #include <asm-generic/errno-base.h>
 #include <asm-generic/errno.h>
 #include <unistd.h>
 #include <memory>
 #include <cstring>
-
 
 #define FILENAME "file"
 
@@ -56,7 +56,10 @@ TEST_CASE("T-1.13", "[Part_1]") {
 
     REQUIRE(memfs->fuseMknod("/foo.txt", 0644, 0) == 0);
     REQUIRE(memfs->fuseGetattr("/foo.txt", statbuf) == 0);
+
 }
+
+
 TEST_CASE("T-1.14", "[Part_1]") {
     printf("Testcase 1.14: fuseWrite/Read\n");
     size_t size =512;
@@ -90,7 +93,7 @@ TEST_CASE("T-1.15", "[Part_1]") {
     auto *r = new char[size];
     memset(r,0, size);
     auto *w = new char[size];
-    memset(w,0, size);
+    memset(r,0, size);
     memfs->fuseMknod("/foo.txt", 0644, 0);
     REQUIRE(memfs->fuseWrite("/foo.txt",r,size,0,stat) == size);
     REQUIRE(memfs->fuseTruncate("/foo.txt",size/2,stat)==0);
@@ -131,3 +134,27 @@ TEST_CASE("T1.17","[Part_1]"){
     REQUIRE(statbuf->st_mode==(S_IFREG |  mode));
 
 }
+TEST_CASE("T-1.18", "[Part_1]") {
+    printf("Testcase 1.18: Write file with the same name\n");
+
+    std::unique_ptr<MyInMemoryFS> memfs(new MyInMemoryFS());
+
+
+    REQUIRE(memfs->fuseMknod("/foo.txt", 0644, 0) == 0);
+    REQUIRE(memfs->fuseMknod("/foo.txt", 0644, 0) == -EEXIST);
+    REQUIRE(memfs->fuseUnlink("/foo.txt") == 0);
+    REQUIRE(memfs->fuseUnlink("/foo.txt") == -ENOENT);
+
+}
+TEST_CASE("T-1.19", "[Part_1]") {
+    printf("Testcase 1.19: Unlinlink file\n");
+
+    std::unique_ptr<MyInMemoryFS> memfs(new MyInMemoryFS());
+
+
+    REQUIRE(memfs->fuseMknod("/foo.txt", 0644, 0) == 0);
+    REQUIRE(memfs->fuseUnlink("/foo.txt") == 0);
+    REQUIRE(memfs->fuseUnlink("/foo.txt") == -ENOENT);
+
+}
+
