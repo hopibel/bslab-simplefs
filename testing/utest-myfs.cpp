@@ -45,3 +45,13 @@ TEST_CASE("T-1.12", "[Part_1]") {
     REQUIRE(memfs->fuseGetattr("/foofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoofoo.txt",
         statbuf) == -ENOENT);
 }
+
+TEST_CASE("T-1.13", "[Part_1]") {
+    printf("Testcase 1.13: fuseMknod\n");
+
+    std::unique_ptr<MyInMemoryFS> memfs(new MyInMemoryFS());
+    struct stat* statbuf = new struct stat();
+
+    REQUIRE(memfs->fuseMknod("/foo.txt", 0644, 0) == 0);
+    REQUIRE(memfs->fuseGetattr("/foo.txt", statbuf) == 0);
+}
