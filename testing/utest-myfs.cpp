@@ -90,7 +90,7 @@ TEST_CASE("T-1.15", "[Part_1]") {
     auto *r = new char[size];
     memset(r,0, size);
     auto *w = new char[size];
-    memset(r,0, size);
+    memset(w,0, size);
     memfs->fuseMknod("/foo.txt", 0644, 0);
     REQUIRE(memfs->fuseWrite("/foo.txt",r,size,0,stat) == size);
     REQUIRE(memfs->fuseTruncate("/foo.txt",size/2,stat)==0);
