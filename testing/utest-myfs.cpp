@@ -17,6 +17,7 @@
 #include <asm-generic/errno.h>
 #include <unistd.h>
 #include <memory>
+#include <cstring>
 
 #define FILENAME "file"
 
@@ -54,4 +55,51 @@ TEST_CASE("T-1.13", "[Part_1]") {
 
     REQUIRE(memfs->fuseMknod("/foo.txt", 0644, 0) == 0);
     REQUIRE(memfs->fuseGetattr("/foo.txt", statbuf) == 0);
+}
+TEST_CASE("T-1.14", "[Part_1]") {
+    printf("Testcase 1.14: fuseWrite/Read\n");
+    size_t size =512;
+    std::unique_ptr<MyInMemoryFS> memfs(new MyInMemoryFS());
+    struct fuse_file_info* stat = new struct fuse_file_info();
+    char* r= new char[size];
+    memset(r, 0, size);
+    char* w= new char[size];
+    char* w2= new char[2*size];
+    memset(w, 1, size);
+    memset(w2,2,2*size);
+    REQUIRE(memfs->fuseMknod("/foo.txt", 0644, 0) == 0);
+    REQUIRE(memfs->fuseWrite("/foo.txt",r,size,0,stat) == size);
+    REQUIRE(memfs->fuseRead("/foo.txt",w,size,0,stat)==size);
+    REQUIRE(memcmp(r,w,size)==0);
+    REQUIRE(memfs->fuseRead("/foo.txt",w2,size*2,0,stat)==size);
+    REQUIRE(memfs->fuseRead("/foo.txt",w,size/2,0,stat)==size/2);
+    REQUIRE(memfs->fuseWrite("/foo.txt",r,size,size+1, stat) == size);
+    REQUIRE(memfs->fuseRead("/foo.txt",w2,size*2,0,stat)==size*2);
+    REQUIRE(memcmp(r,w,size)==0);
+    delete []  r;
+    delete []  w;
+    delete []  w2;
+
+}
+TEST_CASE("T-1.15", "[Part_1]") {
+    printf("Testcase 1.13: fusetruncate\n");
+    size_t size = 512;
+    std::unique_ptr<MyInMemoryFS> memfs(new MyInMemoryFS());
+    auto *stat = new struct fuse_file_info();
+    auto *r = new char[size];
+    memset(r,0, size);
+    auto *w = new char[size];
+    memset(r,0, size);
+    memfs->fuseMknod("/foo.txt", 0644, 0);
+    REQUIRE(memfs->fuseWrite("/foo.txt",r,size,0,stat) == size);
+    REQUIRE(memfs->fuseTruncate("/foo.txt",size/2,stat)==0);
+    REQUIRE(memfs->fuseRead("/foo.txt",w,size,0,stat)==size/2);
+    REQUIRE(memfs->fuseTruncate("/bar.txt",size,stat)<0);
+    REQUIRE(memfs->fuseRead("/foo.txt",w,size,0,stat)==size/2);
+    REQUIRE(memfs->fuseTruncate("/foo.txt",size,stat)==0);
+    REQUIRE(memfs->fuseRead("/foo.txt",w,size,0,stat)==size);
+    REQUIRE(memcmp(r,w,size/2)==0);
+    delete []  r;
+    delete []  w;
+    delete stat;
 }
