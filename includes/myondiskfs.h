@@ -7,6 +7,14 @@
 #define MYFS_MYONDISKFS_H
 
 #include "myfs.h"
+#include "myfs-structs.h"
+
+#include "Superblock.h"
+#include "Dmap.h"
+#include "Fat.h"
+#include "Root.h"
+
+#include <array>
 
 /// @brief On-disk implementation of a simple file system.
 class MyOnDiskFS : public MyFS {
@@ -17,6 +25,13 @@ public:
     static MyOnDiskFS *Instance();
 
     // TODO: [PART 1] Add attributes of your file system here
+    Superblock superblock;
+    Dmap dmap;
+    Fat fat;
+    Root root;
+
+    // use c++ array so we can use array.fill(0) to reset it
+    std::array<char, BLOCK_SIZE> buffer;
 
     MyOnDiskFS();
     ~MyOnDiskFS();

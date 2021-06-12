@@ -31,7 +31,6 @@ MyOnDiskFS::MyOnDiskFS() : MyFS() {
     this->blockDevice= new BlockDevice(BLOCK_SIZE);
 
     // TODO: [PART 2] Add your constructor code here
-
 }
 
 /// @brief Destructor of the on-disk file system class.
@@ -299,9 +298,21 @@ void* MyOnDiskFS::fuseInit(struct fuse_conn_info *conn) {
             ret = this->blockDevice->create(((MyFsInfo *) fuse_get_context()->private_data)->contFile);
 
             if (ret >= 0) {
-
                 // TODO: [PART 2] Create empty structures in file
+                LOG("Writing empty filesystem structures");
 
+                // Preallocate container by writing empty block at the end
+                buffer.fill(0); // zero-initialized dummy block
+                blockDevice->write(CONTAINER_BLOCKS-1, buffer.data());
+
+                // Create structures, allocate memory, etc
+                superblock.init(CONTAINER_BLOCKS);
+                dmap.init(CONTAINER_BLOCKS);
+                fat.init(CONTAINER_BLOCKS);
+                root.init(CONTAINER_BLOCKS);
+
+                // TODO: Write new superblock to disk
+                // TODO: implement superblock serialisation
             }
         }
 
@@ -320,7 +331,7 @@ void MyOnDiskFS::fuseDestroy() {
     LOGM();
 
     // TODO: [PART 2] Implement this!
-
+    blockDevice->close();
 }
 
 // TODO: [PART 2] You may add your own additional methods here!
