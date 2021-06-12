@@ -3,10 +3,10 @@
 
 class Dmap {
 public:
-    static unsigned requiredBlocks(unsigned containerBlocks);
+    static int requiredBlocks(int containerBlocks);
 
     // Initialize empty DMAP for the given container size
-    void init(unsigned containerBlocks);
+    void init(int containerBlocks);
 
 private:
 };

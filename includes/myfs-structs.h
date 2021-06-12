@@ -15,7 +15,7 @@
 #define NUM_OPEN_FILES 64
 
 // TODO: Add structures of your file system here
-const unsigned CONTAINER_SIZE_MB = 64; // container size in Megabytes
-const unsigned CONTAINER_BLOCKS = CONTAINER_SIZE_MB * (1024 * 1024 / BLOCK_SIZE);
+const int CONTAINER_SIZE_MB = 64; // container size in Megabytes
+const int CONTAINER_BLOCKS = CONTAINER_SIZE_MB * (1024 * 1024 / BLOCK_SIZE);
 
 #endif /* myfs_structs_h */

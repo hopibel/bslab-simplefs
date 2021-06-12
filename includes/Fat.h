@@ -3,10 +3,10 @@
 
 class Fat {
 public:
-    static unsigned requiredBlocks(unsigned containerBlocks);
+    static int requiredBlocks(int containerBlocks);
 
     // Initialize empty FAT for the given container size
-    void init(unsigned containerBlocks);
+    void init(int containerBlocks);
 
 private:
 };

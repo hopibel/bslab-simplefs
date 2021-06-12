@@ -303,7 +303,7 @@ void* MyOnDiskFS::fuseInit(struct fuse_conn_info *conn) {
 
                 // Preallocate container by writing empty block at the end
                 buffer.fill(0); // zero-initialized dummy block
-                blockDevice->write(CONTAINER_BLOCKS-1, buffer.data());
+                ret = blockDevice->write(CONTAINER_BLOCKS-1, buffer.data());
 
                 // Create structures, allocate memory, etc
                 superblock.init(CONTAINER_BLOCKS);
@@ -311,15 +311,22 @@ void* MyOnDiskFS::fuseInit(struct fuse_conn_info *conn) {
                 fat.init(CONTAINER_BLOCKS);
                 root.init(CONTAINER_BLOCKS);
 
-                // TODO: Write new superblock to disk
-                // TODO: implement superblock serialisation
+                if (ret >= 0) {
+                    // Write new superblock to disk
+                    ret = blockDevice->write(superblock.getSuperblockStart(), superblock.serialize(buffer.data()));
+                    if (ret < 0) {
+                        LOG("Failed to write superblock");
+                    }
+                } else {
+                    LOG("Failed to preallocate container");
+                }
             }
         }
 
         if(ret < 0) {
             LOGF("ERROR: Access to container file failed with error %d", ret);
         }
-     }
+    }
 
     return 0;
 }

@@ -30,7 +30,7 @@ public:
     Fat fat;
     Root root;
 
-    // use c++ array so we can use array.fill(0) to reset it
+    // use std::array so we can use array.fill(0) to reset it
     std::array<char, BLOCK_SIZE> buffer;
 
     MyOnDiskFS();

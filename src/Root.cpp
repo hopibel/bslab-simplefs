@@ -1,11 +1,12 @@
 #include "Root.h"
+#include "myfs-structs.h"
 
 // Calculate number of blocks required for the given container size.
-unsigned Root::requiredBlocks(unsigned int containerBlocks) {
-    // TODO: calculate
-    return 1;
+int Root::requiredBlocks(int containerBlocks) {
+    // hardcoded to 64 files
+    return NUM_DIR_ENTRIES;
 }
 
-void Root::init(unsigned int containerBlocks) {
+void Root::init(int containerBlocks) {
     // TODO: implement me
 }
