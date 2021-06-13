@@ -307,16 +307,17 @@ void* MyOnDiskFS::fuseInit(struct fuse_conn_info *conn) {
 
                 // Create structures, allocate memory, etc
                 superblock.init(CONTAINER_BLOCKS);
-                dmap.init(CONTAINER_BLOCKS);
+                dmap.init(CONTAINER_BLOCKS, superblock.getDataStart());
                 fat.init(CONTAINER_BLOCKS);
                 root.init(CONTAINER_BLOCKS);
 
                 if (ret >= 0) {
-                    // Write new superblock to disk
+                    // Write structures to disk
                     ret = blockDevice->write(superblock.getSuperblockStart(), superblock.serialize(buffer.data()));
                     if (ret < 0) {
                         LOG("Failed to write superblock");
                     }
+                    // TODO: write dmap to disk
                 } else {
                     LOG("Failed to preallocate container");
                 }
