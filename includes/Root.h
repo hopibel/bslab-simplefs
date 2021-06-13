@@ -1,6 +1,8 @@
 #ifndef ROOT_H
 #define ROOT_H
 
+#include "OnDiskFile.h"
+#include  <vector>
 class Root {
 public:
     static int requiredBlocks(int containerBlocks);
@@ -9,6 +11,7 @@ public:
     void init(int containerBlocks);
 
 private:
+    std::vector<OnDiskFile>  RootDir { std::vector<OnDiskFile>(64)};
 };
 
 #endif // ROOT_H

@@ -18,7 +18,7 @@ set(SOURCES
         src/Dmap.cpp
         src/Fat.cpp
         src/Root.cpp
-)
+        src/OnDiskFile.cpp)
 
 add_executable(mount.myfs src/blockdevice.cpp
         src/myfs.cpp
@@ -49,7 +49,7 @@ add_executable(integrationtests
         testing/itest.cpp
         testing/tools.cpp
         ${SOURCES}
-)
+        )
 
 find_package(PkgConfig)
 pkg_check_modules(FUSE fuse)
