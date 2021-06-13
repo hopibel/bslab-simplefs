@@ -14,12 +14,24 @@ public:
     OnDiskFile();
     char* serialize(char* buffer);
     char* deserialize(char* buffer);
+    std::string getPath(){return path;}
+    off_t getSize();
+    uint32_t getFirst_block(){return first_block;}
+    void setAtime();
+    void setMtime();
+    void setCtime();
+    void setUserId(uid_t t);
+    void setGroupId(gid_t t);
+    void setMode(mode_t m);
+    void setFirst_block(uint32_t f);
+    void setSize(off_t s);
+
     ~OnDiskFile(){
-        //delete(statbuf);
+        //delete(structstat);
     }
 private:
     std::string path;
-    struct stat statbuf;
+    struct stat structstat;
     uint32_t first_block;
 
 
