@@ -8,16 +8,17 @@ public:
     static int requiredBlocks(int containerBlocks);
 
     // Initialize empty DMAP for the given container size
-    void init(int containerBlocks, int metadata);
-    // TODO: serialize/deserialize
+    void init(int containerBlocks, int metadataBlocks);
 
     int findFreeBlock();
     bool isFree(int block) const;
     void markUsed(int block);
     void markFree(int block);
 
+    std::vector<unsigned char> serialize();
+
 private:
-    std::vector<unsigned> flags;
+    std::vector<bool> flags;
     int num_flags;
 };
 

@@ -317,7 +317,7 @@ void* MyOnDiskFS::fuseInit(struct fuse_conn_info *conn) {
                     if (ret < 0) {
                         LOG("Failed to write superblock");
                     }
-                    // TODO: write dmap to disk
+                    writeMetadata();
                 } else {
                     LOG("Failed to preallocate container");
                 }
@@ -343,6 +343,23 @@ void MyOnDiskFS::fuseDestroy() {
 }
 
 // TODO: [PART 2] You may add your own additional methods here!
+
+void MyOnDiskFS::writeMetadata() {
+    // superblock is written on creation and never changes
+
+    // TODO: serialize dmap
+    dump(dmap.serialize(), superblock.getDmapStart());
+
+    // TODO: serialize fat
+    dump(fat.serialize(), superblock.getFatStart());
+
+    // TODO: serialize root
+    dump(root.serialize(), superblock.getRootStart());
+}
+
+void MyOnDiskFS::dump(std::vector<unsigned char> bytes, int startBlock) const {
+    // TODO: implement me
+}
 
 // DO NOT EDIT ANYTHING BELOW THIS LINE!!!
 

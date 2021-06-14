@@ -57,7 +57,9 @@ public:
     virtual void fuseDestroy();
 
     // TODO: Add methods of your file system here
-
+private:
+    void writeMetadata();
+    void dump(std::vector<unsigned char> bytes, int startBlock) const;
 };
 
 #endif //MYFS_MYONDISKFS_H

@@ -1,6 +1,8 @@
 #include "Fat.h"
 #include "myfs-structs.h"
 
+#include <vector>
+
 // Calculate number of blocks required for the given container size.
 int Fat::requiredBlocks(int containerBlocks) {
     const int entries_per_block = BLOCK_SIZE / sizeof(int);
@@ -11,4 +13,9 @@ int Fat::requiredBlocks(int containerBlocks) {
 
 void Fat::init(int containerBlocks) {
     // TODO: implement me
+}
+
+std::vector<unsigned char> Fat::serialize() {
+    // TODO: implement
+    return std::vector<unsigned char> {};
 }
