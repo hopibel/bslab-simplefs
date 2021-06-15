@@ -55,10 +55,10 @@ void Dmap::markFree(int block) {
 }
 
 // bits indexed little endian order
-std::vector<unsigned char> Dmap::serialize() {
-    std::vector<unsigned char> bytes;
+std::vector<char> Dmap::serialize() {
+    std::vector<char> bytes;
 
-    unsigned char byte = 0;
+    char byte = 0;
     for (std::size_t i = 0; i < flags.size(); ++i) {
         byte |= flags[i] << (i % 8);
         if (i % 8 == 7) {

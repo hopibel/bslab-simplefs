@@ -13,7 +13,7 @@ void Root::init(int containerBlocks) {
     // TODO: implement me
 }
 
-std::vector<unsigned char> Root::serialize() {
+std::vector<char> Root::serialize() {
     // TODO: implement
-    return std::vector<unsigned char> {};
+    return std::vector<char> {};
 }

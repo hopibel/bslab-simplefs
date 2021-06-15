@@ -15,7 +15,7 @@ public:
     void markUsed(int block);
     void markFree(int block);
 
-    std::vector<unsigned char> serialize();
+    std::vector<char> serialize();
 
 private:
     std::vector<bool> flags;

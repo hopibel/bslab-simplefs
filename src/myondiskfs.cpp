@@ -4,6 +4,7 @@
 //
 
 #include "myondiskfs.h"
+#include "myfs-structs.h"
 
 // For documentation of FUSE methods see https://libfuse.github.io/doxygen/structfuse__operations.html
 
@@ -348,17 +349,29 @@ void MyOnDiskFS::writeMetadata() {
     // superblock is written on creation and never changes
 
     // TODO: serialize dmap
-    dump(dmap.serialize(), superblock.getDmapStart());
+    dumpToDisk(dmap.serialize(), superblock.getDmapStart());
 
     // TODO: serialize fat
-    dump(fat.serialize(), superblock.getFatStart());
+    dumpToDisk(fat.serialize(), superblock.getFatStart());
 
     // TODO: serialize root
-    dump(root.serialize(), superblock.getRootStart());
+    dumpToDisk(root.serialize(), superblock.getRootStart());
 }
 
-void MyOnDiskFS::dump(std::vector<unsigned char> bytes, int startBlock) const {
-    // TODO: implement me
+// TODO: test
+void MyOnDiskFS::dumpToDisk(std::vector<char> bytes, int startBlock) const {
+    // calc blocks, rounded up
+    auto blocksNeeded = (bytes.size() + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+    // Zero-pad to be divisible by BLOCK_SIZE
+    if (bytes.size() % BLOCK_SIZE != 0) {
+        bytes.resize(blocksNeeded * BLOCK_SIZE, 0);
+    }
+
+    // write blocks to disk
+    for (std::size_t offset = 0; offset < blocksNeeded; ++offset) {
+        blockDevice->write(startBlock + offset, bytes.data() + offset * BLOCK_SIZE);
+    }
 }
 
 // DO NOT EDIT ANYTHING BELOW THIS LINE!!!

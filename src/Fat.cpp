@@ -15,7 +15,7 @@ void Fat::init(int containerBlocks) {
     // TODO: implement me
 }
 
-std::vector<unsigned char> Fat::serialize() {
+std::vector<char> Fat::serialize() {
     // TODO: implement
-    return std::vector<unsigned char> {};
+    return std::vector<char> {};
 }

@@ -10,7 +10,7 @@ public:
     // Initialize empty FAT for the given container size
     void init(int containerBlocks);
 
-    std::vector<unsigned char> serialize();
+    std::vector<char> serialize();
 
 private:
 };

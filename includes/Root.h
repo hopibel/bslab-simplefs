@@ -12,7 +12,7 @@ public:
     // Initialize empty Root file directory for the given container size
     void init(int containerBlocks);
 
-    std::vector<unsigned char> serialize();
+    std::vector<char> serialize();
 
 private:
     std::vector<OnDiskFile>  RootDir { std::vector<OnDiskFile>(64)};
