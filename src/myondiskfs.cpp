@@ -347,18 +347,14 @@ void MyOnDiskFS::fuseDestroy() {
 
 void MyOnDiskFS::writeMetadata() {
     // superblock is written on creation and never changes
-
-    // TODO: serialize dmap
     dumpToDisk(dmap.serialize(), superblock.getDmapStart());
-
-    // TODO: serialize fat
     dumpToDisk(fat.serialize(), superblock.getFatStart());
 
     // TODO: serialize root
     dumpToDisk(root.serialize(), superblock.getRootStart());
 }
 
-// TODO: test
+// TODO: write tests
 void MyOnDiskFS::dumpToDisk(std::vector<char> bytes, int startBlock) const {
     // calc blocks, rounded up
     auto blocksNeeded = (bytes.size() + BLOCK_SIZE - 1) / BLOCK_SIZE;

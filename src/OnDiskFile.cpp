@@ -10,10 +10,11 @@ OnDiskFile::OnDiskFile() {
     this->first_block =0;
 }
 char* OnDiskFile::serialize(char *buffer) {
+    memcpy(buffer, this, sizeof(*this));
 
-    memcpy(buffer,this, sizeof(*this));
-
+    return buffer;
 }
+
 off_t OnDiskFile::getSize() {
     return this->structstat.st_size;
 }

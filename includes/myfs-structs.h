@@ -17,5 +17,6 @@
 // TODO: Add structures of your file system here
 const int CONTAINER_SIZE_MB = 64; // container size in Megabytes
 const int CONTAINER_BLOCKS = CONTAINER_SIZE_MB * (1024 * 1024 / BLOCK_SIZE);
+const int END_OF_CLUSTER = 0xFFFFFFFF;
 
 #endif /* myfs_structs_h */
