@@ -4,6 +4,8 @@
 
 #include <algorithm>
 #include <errno.h>
+#include <stdexcept>
+#include <string>
 
 // Calculate number of blocks required for the given container size.
 int Dmap::requiredBlocks(int containerBlocks) {
@@ -29,7 +31,7 @@ void Dmap::init(int containerBlocks, int metadataBlocks) {
 }
 
 // Returns block id of a free block or -ENOSPC if there are none
-int Dmap::findFreeBlock() {
+int Dmap::findFreeBlock() const {
     // TODO: cache locations of free blocks (contiguous regions)
     auto firstFree = std::find(flags.begin(), flags.end(), false);
     if (firstFree == flags.end()) {
@@ -38,6 +40,20 @@ int Dmap::findFreeBlock() {
     } else {
         return firstFree - flags.begin();
     }
+}
+
+std::vector<int> Dmap::findNFreeBlocks(int n) const {
+    std::vector<int> blocks;
+    for (int i = 0; i < n; ++i) {
+        int block = findFreeBlock();
+        if (block < 0) {
+            throw std::runtime_error("Couldn't find " + std::to_string(n) + " free blocks");
+        } else {
+            blocks.push_back(block);
+        }
+    }
+
+    return blocks;
 }
 
 bool Dmap::isFree(int block) const {
