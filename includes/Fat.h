@@ -15,6 +15,7 @@ public:
     // TODO: truncate?
 
     std::vector<char> serialize();
+    void deserialize(std::vector<char> bytes, int containerBlocks);
 
 private:
     std::vector<int> table;

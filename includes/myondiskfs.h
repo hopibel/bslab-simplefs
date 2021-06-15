@@ -58,7 +58,10 @@ public:
 
     // TODO: Add methods of your file system here
 private:
+    void readMetadata();
     void writeMetadata();
+
+    std::vector<char> readFromDisk(int startBlock, int count);
     void dumpToDisk(std::vector<char> bytes, int startBlock) const;
 };
 

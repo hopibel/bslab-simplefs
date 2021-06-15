@@ -17,6 +17,7 @@ public:
     void markFree(int block);
 
     std::vector<char> serialize();
+    void deserialize(std::vector<char> bytes, int containerBlocks);
 
 private:
     std::vector<bool> flags;

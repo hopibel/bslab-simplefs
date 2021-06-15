@@ -1,10 +1,13 @@
 #ifndef SUPERBLOCK_H
 #define SUPERBLOCK_H
 
+#include <vector>
+
 class Superblock {
 public:
     void init(int numBlocks);
     char* serialize(char* buffer) const;
+    void deserialize(std::vector<char> bytes);
 
     // Start block
     int getSuperblockStart() const { return 0; }

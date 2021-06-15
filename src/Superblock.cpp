@@ -2,8 +2,10 @@
 #include "Dmap.h"
 #include "Fat.h"
 #include "Root.h"
-#include <cassert>
+#include "myfs-structs.h"
+
 #include <cstring>
+#include <stdexcept>
 #include <type_traits>
 
 void Superblock::init(int numBlocks) {
@@ -23,6 +25,14 @@ void Superblock::init(int numBlocks) {
 char* Superblock::serialize(char* buffer) const {
     static_assert(std::is_trivially_copyable<Superblock>::value, "Superblock not trivially copyable");
 
-    std::memcpy(buffer, this, sizeof(*this));
+    std::memcpy(buffer, this, sizeof(Superblock));
+
     return buffer;
+}
+
+void Superblock::deserialize(std::vector<char> bytes) {
+    if (bytes.size() != BLOCK_SIZE) {
+        throw std::invalid_argument("expected " + std::to_string(BLOCK_SIZE) + " bytes. received " + std::to_string(bytes.size()));
+    }
+    std::memcpy(this, bytes.data(), sizeof(Superblock));
 }

@@ -13,6 +13,7 @@ public:
     void init(int containerBlocks);
 
     std::vector<char> serialize();
+    void deserialize(std::vector<char> bytes, int containerBlocks);
 
 private:
     std::vector<OnDiskFile>  RootDir { std::vector<OnDiskFile>(64)};

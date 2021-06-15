@@ -345,6 +345,37 @@ void MyOnDiskFS::fuseDestroy() {
 
 // TODO: [PART 2] You may add your own additional methods here!
 
+void MyOnDiskFS::readMetadata() {
+    superblock.deserialize(
+        readFromDisk(superblock.getSuperblockStart(), superblock.getSuperblockSize())
+    );
+    dmap.deserialize(
+        readFromDisk(superblock.getDmapStart(), superblock.getDmapSize()),
+        superblock.getContainerSize()
+    );
+    fat.deserialize(
+        readFromDisk(superblock.getFatStart(), superblock.getFatSize()),
+        superblock.getContainerSize()
+    );
+    root.deserialize(
+        readFromDisk(superblock.getRootStart(), superblock.getRootSize()),
+        superblock.getContainerSize()
+    );
+}
+
+// Read `count` blocks into a char vector starting from `startBlock`
+std::vector<char> MyOnDiskFS::readFromDisk(int startBlock, int count) {
+    std::vector<char> bytes;
+    for (int offset = 0; offset < count; ++offset) {
+        // read a block
+        blockDevice->read(startBlock + offset, buffer.data());
+        // append to bytes vector
+        std::copy(buffer.begin(), buffer.end(), std::back_inserter(bytes));
+    }
+
+    return bytes;
+}
+
 void MyOnDiskFS::writeMetadata() {
     // superblock is written on creation and never changes
     dumpToDisk(dmap.serialize(), superblock.getDmapStart());
@@ -354,7 +385,6 @@ void MyOnDiskFS::writeMetadata() {
     dumpToDisk(root.serialize(), superblock.getRootStart());
 }
 
-// TODO: write tests
 void MyOnDiskFS::dumpToDisk(std::vector<char> bytes, int startBlock) const {
     // calc blocks, rounded up
     auto blocksNeeded = (bytes.size() + BLOCK_SIZE - 1) / BLOCK_SIZE;

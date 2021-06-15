@@ -10,10 +10,15 @@ int Root::requiredBlocks(int containerBlocks) {
 }
 
 void Root::init(int containerBlocks) {
-    // TODO: implement me
+    // TODO: implement
 }
 
 std::vector<char> Root::serialize() {
     // TODO: implement
     return std::vector<char> {};
+}
+
+// TODO: implement
+void Root::deserialize(std::vector<char> bytes, int containerBlocks) {
+
 }

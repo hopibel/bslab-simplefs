@@ -40,6 +40,11 @@ std::vector<char> Fat::serialize() {
     return bytes;
 }
 
+// TODO: implement
+void Fat::deserialize(std::vector<char> bytes, int containerBlocks) {
+
+}
+
 int Fat::getLastBlock(int firstBlock) const {
     int block = firstBlock;
     while (table[block] != END_OF_CLUSTER) {

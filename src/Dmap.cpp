@@ -85,3 +85,8 @@ std::vector<char> Dmap::serialize() {
 
     return bytes;
 }
+
+// TODO: implement
+void Dmap::deserialize(std::vector<char> bytes, int containerBlocks) {
+    
+}
