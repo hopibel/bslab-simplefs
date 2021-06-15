@@ -86,7 +86,24 @@ std::vector<char> Dmap::serialize() {
     return bytes;
 }
 
-// TODO: implement
 void Dmap::deserialize(std::vector<char> bytes, int containerBlocks) {
-    
+    if (bytes.size() / BLOCK_SIZE != (std::size_t) Dmap::requiredBlocks(containerBlocks)) {
+        throw std::invalid_argument(
+            "expected " +
+            std::to_string(Dmap::requiredBlocks(containerBlocks) * BLOCK_SIZE) +
+            " bytes. received " +
+            std::to_string(bytes.size())
+        );
+    }
+
+    // read containerBlocks bits
+    for (std::size_t i = 0; i < bytes.size() && i * 8 < (std::size_t) containerBlocks; ++i) {
+        // unpack bits into 8 flags starting from lowest
+        for (int bit = 0; bit < 8; ++bit) {
+            flags.push_back(bytes[i] & (1 << bit));
+        }
+    }
+
+    // discard extra bits, if any
+    flags.resize(containerBlocks);
 }

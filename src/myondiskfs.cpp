@@ -293,6 +293,9 @@ void* MyOnDiskFS::fuseInit(struct fuse_conn_info *conn) {
 
             // TODO: [PART 2] Read existing structures form file
 
+            // TODO: return error codes
+            readMetadata();
+
         } else if(ret == -ENOENT) {
             LOG("Container file does not exist, creating a new one");
 
