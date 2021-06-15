@@ -1,6 +1,7 @@
 #include "Fat.h"
 #include "myfs-structs.h"
 
+#include <cstring>
 #include <iterator>
 #include <vector>
 
@@ -40,9 +41,20 @@ std::vector<char> Fat::serialize() {
     return bytes;
 }
 
-// TODO: implement
 void Fat::deserialize(std::vector<char> bytes, int containerBlocks) {
+    if (bytes.size() / sizeof(int) != (std::size_t) containerBlocks) {
+        throw std::invalid_argument(
+            "expected " +
+            std::to_string(containerBlocks * sizeof(int)) +
+            " bytes. received " +
+            std::to_string(bytes.size())
+        );
+    }
 
+    // allocate memory
+    table.reserve(containerBlocks);
+    // copy bytes into table
+    memcpy(table.data(), bytes.data(), bytes.size());
 }
 
 int Fat::getLastBlock(int firstBlock) const {
