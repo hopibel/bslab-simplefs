@@ -15,6 +15,8 @@ public:
     std::vector<char> serialize();
     void deserialize(std::vector<char> bytes, int containerBlocks);
 
+    std::vector<std::string> getFileList() const;
+
 private:
     std::vector<OnDiskFile> RootDir {std::vector<OnDiskFile>(NUM_DIR_ENTRIES)};
 };

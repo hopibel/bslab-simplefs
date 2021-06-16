@@ -263,6 +263,19 @@ int MyOnDiskFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler,
 
     // TODO: [PART 2] Implement this!
 
+    LOGF( "--> Getting The List of Files of %s", path );
+
+    filler( buf, ".", nullptr, 0 ); // Current Directory
+    filler( buf, "..", nullptr, 0 ); // Parent Directory
+
+    if (std::string(path) == "/") // If the user is trying to show the files/directories of the root directory list all files
+    {
+        for (std::string filename : root.getFileList()) {
+            // LOGF("%s", filename.c_str());
+            filler(buf, filename.c_str(), nullptr, 0);
+        }
+    }
+
     RETURN(0);
 }
 
@@ -383,8 +396,6 @@ void MyOnDiskFS::writeMetadata() {
     // superblock is written on creation and never changes
     dumpToDisk(dmap.serialize(), superblock.getDmapStart());
     dumpToDisk(fat.serialize(), superblock.getFatStart());
-
-    // TODO: serialize root
     dumpToDisk(root.serialize(), superblock.getRootStart());
 }
 
