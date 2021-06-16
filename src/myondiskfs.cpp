@@ -393,13 +393,15 @@ void* MyOnDiskFS::fuseInit(struct fuse_conn_info *conn) {
 void MyOnDiskFS::fuseDestroy() {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
+    writeMetadata();
     blockDevice->close();
 }
 
 // TODO: [PART 2] You may add your own additional methods here!
 
 void MyOnDiskFS::readMetadata() {
+    LOGM();
     superblock.deserialize(
         readFromDisk(superblock.getSuperblockStart(), superblock.getSuperblockSize())
     );
@@ -419,6 +421,7 @@ void MyOnDiskFS::readMetadata() {
 
 // Read `count` blocks into a char vector starting from `startBlock`
 std::vector<char> MyOnDiskFS::readFromDisk(int startBlock, int count) {
+    LOGM();
     std::vector<char> bytes;
     for (int offset = 0; offset < count; ++offset) {
         // read a block
@@ -426,6 +429,8 @@ std::vector<char> MyOnDiskFS::readFromDisk(int startBlock, int count) {
         // append to bytes vector
         std::copy(buffer.begin(), buffer.end(), std::back_inserter(bytes));
     }
+
+    LOGF("read %ld bytes", bytes.size());
 
     return bytes;
 }
@@ -438,6 +443,7 @@ void MyOnDiskFS::writeMetadata() {
 }
 
 void MyOnDiskFS::dumpToDisk(std::vector<char> bytes, int startBlock) const {
+    LOGM();
     // calc blocks, rounded up
     auto blocksNeeded = (bytes.size() + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
@@ -450,6 +456,8 @@ void MyOnDiskFS::dumpToDisk(std::vector<char> bytes, int startBlock) const {
     for (std::size_t offset = 0; offset < blocksNeeded; ++offset) {
         blockDevice->write(startBlock + offset, bytes.data() + offset * BLOCK_SIZE);
     }
+
+    LOGF("wrote %ld bytes", bytes.size());
 }
 
 // DO NOT EDIT ANYTHING BELOW THIS LINE!!!

@@ -36,7 +36,8 @@ void Fat::appendBlock(int firstBlock, int newBlock) {
 
 std::vector<char> Fat::serialize() {
     std::vector<char> bytes;
-    std::copy(table.data(), table.data() + table.size(), std::back_inserter(bytes));
+    bytes.resize(table.size() * sizeof(uint32_t), 0);
+    memcpy(bytes.data(), table.data(), bytes.size());
 
     return bytes;
 }
@@ -52,7 +53,7 @@ void Fat::deserialize(std::vector<char> bytes, int containerBlocks) {
     }
 
     // allocate memory
-    table.reserve(containerBlocks);
+    table.resize(containerBlocks, 0);
     // copy bytes into table
     memcpy(table.data(), bytes.data(), bytes.size());
 }
