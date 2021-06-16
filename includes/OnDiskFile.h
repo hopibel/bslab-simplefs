@@ -15,19 +15,21 @@ public:
     char* serialize(char* buffer);
     void deserialize(char* buffer);
 
-    std::string getName(){ return name; }
-    off_t getSize();
-    uint32_t getFirstBlock(){return firstBlock;}
+    std::string getName() const { return name; }
+    off_t getSize() const;
+    uint32_t getFirstBlock() const {return firstBlock;}
+    struct stat getStat() const { return structstat; }
 
     void setName(const char* newName);
     void setName(const std::string newName);
+    void setFirstBlock(uint32_t f);
+
     void setAtime();
     void setMtime();
     void setCtime();
     void setUserId(uid_t t);
     void setGroupId(gid_t t);
     void setMode(mode_t m);
-    void setFirstBlock(uint32_t f);
     void setSize(off_t s);
 
 private:

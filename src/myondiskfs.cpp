@@ -5,6 +5,7 @@
 
 #include "myondiskfs.h"
 #include "myfs-structs.h"
+#include <asm-generic/errno-base.h>
 
 // For documentation of FUSE methods see https://libfuse.github.io/doxygen/structfuse__operations.html
 
@@ -103,7 +104,50 @@ int MyOnDiskFS::fuseGetattr(const char *path, struct stat *statbuf) {
 
     // TODO: [PART 2] Implement this!
 
-    RETURN(0);
+    LOGF( "\tAttributes of %s requested\n", path );
+
+    if ( strcmp( path, "/" ) == 0 ) {
+        statbuf->st_uid = getuid(); // The owner of the file/directory is the user who mounted the filesystem
+        statbuf->st_gid = getgid(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+        statbuf->st_atime = time(nullptr); // The last "a"ccess of the file/directory is right now
+        statbuf->st_mtime = time(nullptr); // The last "m"odification of the file/directory is right now
+        statbuf->st_mode = S_IFDIR | 0755;
+        statbuf->st_nlink = 2; // Why "two" hardlinks instead of "one"? The answer is here: http://unix.stackexchange.com/a/101536
+        RETURN(0);
+    }
+
+    int ret = 0;
+    if (root.has(path)) {
+        // gespeicherte Attribute zurückgeben
+        OnDiskFile& file = root.getFile(path);
+        *statbuf = file.getStat();
+        LOGF("Permissions: %o", statbuf->st_mode);
+    } else {
+        ret = -ENOENT;
+    }
+
+    RETURN(ret);
+
+    /*
+    int ret = 0;
+    auto it = files.find(path);
+    if (it != files.end()) {
+        // gespeicherte Attribute zurückgeben
+        auto& file = it->second;
+        statbuf->st_uid = file.getUserId(); // The owner of the file/directory is the user who mounted the filesystem
+        statbuf->st_gid = file.getGroupId(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
+        statbuf->st_atime = file.getAtime(); // The last "a"ccess of the file/directory is right now
+        statbuf->st_mtime = file.getMtime(); // The last "m"odification of the file/directory is right now
+        statbuf->st_mode = S_IFREG | file.getMode();
+        LOGF("Permissions: %o", file.getMode());
+        statbuf->st_nlink = 1;
+        statbuf->st_size = file.getSize();
+    } else {
+        ret = -ENOENT;
+    }
+
+    RETURN(ret);
+    */
 }
 
 /// @brief Change file permissions.
@@ -261,7 +305,7 @@ int MyOnDiskFS::fuseTruncate(const char *path, off_t newSize, struct fuse_file_i
 int MyOnDiskFS::fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
 
     LOGF( "--> Getting The List of Files of %s", path );
 

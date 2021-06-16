@@ -71,7 +71,7 @@ void OnDiskFile::setName(const std::string newName) {
     name = newName;
 }
 
-off_t OnDiskFile::getSize() {
+off_t OnDiskFile::getSize() const {
     return this->structstat.st_size;
 }
 void OnDiskFile::setAtime(){

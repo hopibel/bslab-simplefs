@@ -19,11 +19,11 @@ void Root::init(int containerBlocks) {
 
 std::vector<char> Root::serialize() {
     // allocate buffer NUM_DIR_ENTRIES * BLOCK_SIZE bytes
-    std::vector<char> bytes(RootDir.size() * BLOCK_SIZE, 0);
+    std::vector<char> bytes(files.size() * BLOCK_SIZE, 0);
 
     // write one file per block
     char* buf = bytes.data();
-    for (OnDiskFile& file : RootDir) {
+    for (OnDiskFile& file : files) {
         file.serialize(buf);
         buf += BLOCK_SIZE;
     }
@@ -41,8 +41,35 @@ void Root::deserialize(std::vector<char> bytes, int containerBlocks) {
     }
 
     char* buf = bytes.data();
-    for (auto& file : RootDir) {
+    for (auto& file : files) {
         file.deserialize(buf);
         buf += BLOCK_SIZE;
     }
+}
+
+bool Root::has(std::string path) const {
+    for (auto& file : files) {
+        if (file.getName() == path) {
+            return true;
+        }
+    }
+    return false;
+}
+
+OnDiskFile& Root::getFile(std::string path) {
+    for (auto& file : files) {
+        if (file.getName() == path) {
+            return file;
+        }
+    }
+    throw std::out_of_range("Couldn't find " + path + " in directory");
+}
+
+std::vector<std::string> Root::getFileList() const {
+    std::vector<std::string> fileList;
+    for (auto& file : files) {
+        fileList.push_back(file.getName());
+    }
+
+    return fileList;
 }

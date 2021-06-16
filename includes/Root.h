@@ -15,10 +15,12 @@ public:
     std::vector<char> serialize();
     void deserialize(std::vector<char> bytes, int containerBlocks);
 
+    bool has(std::string path) const;
+    OnDiskFile& getFile(std::string path);
     std::vector<std::string> getFileList() const;
 
 private:
-    std::vector<OnDiskFile> RootDir {std::vector<OnDiskFile>(NUM_DIR_ENTRIES)};
+    std::vector<OnDiskFile> files {std::vector<OnDiskFile>(NUM_DIR_ENTRIES)};
 };
 
 #endif // ROOT_H
