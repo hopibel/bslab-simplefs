@@ -68,7 +68,9 @@ OnDiskFile& Root::getFile(std::string path) {
 std::vector<std::string> Root::getFileList() const {
     std::vector<std::string> fileList;
     for (auto& file : files) {
-        fileList.push_back(file.getName());
+        if (file.getName().length() > 0) {
+            fileList.push_back(file.getName());
+        }
     }
 
     return fileList;

@@ -11,7 +11,6 @@
 
 class OnDiskFile {
 public:
-    OnDiskFile();
     char* serialize(char* buffer);
     void deserialize(char* buffer);
 

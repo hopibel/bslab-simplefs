@@ -6,11 +6,6 @@
 #include <algorithm>
 #include <string.h>
 
-OnDiskFile::OnDiskFile() {
-    this->name = std::string(NAME_LENGTH+1,'0');
-    this->firstBlock =0;
-}
-
 // On-disk format:
 // (index, description)
 // 0: Name length
