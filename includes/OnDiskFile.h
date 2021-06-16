@@ -11,13 +11,16 @@
 
 class OnDiskFile {
 public:
+    OnDiskFile() = default;
+    OnDiskFile(std::string name, mode_t mode);
+
     char* serialize(char* buffer);
     void deserialize(char* buffer);
 
     std::string getName() const { return name; }
     off_t getSize() const;
     uint32_t getFirstBlock() const {return firstBlock;}
-    struct stat getStat() const { return structstat; }
+    struct stat getStat() const { return sstat; }
 
     void setName(const char* newName);
     void setName(const std::string newName);
@@ -33,8 +36,8 @@ public:
 
 private:
     std::string name;
-    uint32_t firstBlock;
-    struct stat structstat;
+    uint32_t firstBlock = END_OF_CLUSTER;
+    struct stat sstat;
 };
 
 #endif //MYFS_ONDISKFILE_H

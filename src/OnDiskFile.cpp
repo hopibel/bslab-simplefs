@@ -4,7 +4,22 @@
 #include "OnDiskFile.h"
 
 #include <algorithm>
+#include <unistd.h>
 #include <string.h>
+
+OnDiskFile::OnDiskFile(std::string name, mode_t mode) {
+    this->name = name;
+    sstat.st_atim.tv_sec = time(nullptr);
+    sstat.st_mtim.tv_sec = time(nullptr);
+    sstat.st_ctim.tv_sec = time(nullptr);
+    sstat.st_uid = getuid();
+    sstat.st_gid = getgid();
+    sstat.st_mode = mode;
+
+    sstat.st_size = 0;
+    sstat.st_blocks = 0;
+    sstat.st_nlink = 1;
+}
 
 // On-disk format:
 // (index, description)
@@ -33,7 +48,7 @@ char* OnDiskFile::serialize(char *buffer) {
     bPtr += sizeof(firstBlock);
 
     // write structstat
-    memcpy(bPtr, &structstat, sizeof(structstat));
+    memcpy(bPtr, &sstat, sizeof(sstat));
 
     return buffer;
 }
@@ -52,7 +67,7 @@ void OnDiskFile::deserialize(char *buffer) {
     buffer += sizeof(firstBlock);
 
     // read structstat
-    memcpy(&structstat, buffer, sizeof(structstat));
+    memcpy(&sstat, buffer, sizeof(sstat));
 }
 
 void OnDiskFile::setName(const char* p) {
@@ -67,29 +82,29 @@ void OnDiskFile::setName(const std::string newName) {
 }
 
 off_t OnDiskFile::getSize() const {
-    return this->structstat.st_size;
+    return this->sstat.st_size;
 }
 void OnDiskFile::setAtime(){
-    this->structstat.st_atim.tv_sec = time(nullptr);
+    this->sstat.st_atim.tv_sec = time(nullptr);
 }
 void OnDiskFile::setMtime(){
-    this->structstat.st_mtim.tv_sec = time(nullptr);
+    this->sstat.st_mtim.tv_sec = time(nullptr);
 }
 void OnDiskFile::setCtime(){
-    this->structstat.st_ctim.tv_sec = time(nullptr);
+    this->sstat.st_ctim.tv_sec = time(nullptr);
 }
 void OnDiskFile::setUserId(uid_t t){
-    this->structstat.st_uid =t;
+    this->sstat.st_uid =t;
 }
 void OnDiskFile::setGroupId(gid_t t) {
-    this->structstat.st_gid =t;
+    this->sstat.st_gid =t;
 }
 void OnDiskFile::setMode(mode_t m) {
-    this->structstat.st_mode = m;
+    this->sstat.st_mode = m;
 }
 void OnDiskFile::setFirstBlock(uint32_t f) {
     this->firstBlock = f;
 }
 void OnDiskFile::setSize(off_t s) {
-    this->structstat.st_size = s;
+    this->sstat.st_size = s;
 }

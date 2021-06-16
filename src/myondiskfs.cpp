@@ -57,7 +57,20 @@ MyOnDiskFS::~MyOnDiskFS() {
 int MyOnDiskFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
+
+    if (root.isFull()) {
+        RETURN(-ENOSPC);
+    }
+    if (std::string(path).length() > NAME_LENGTH){
+        RETURN(-ENAMETOOLONG);
+    }
+    if (root.hasFile(path)) {
+        RETURN(-EEXIST);
+    }
+
+    root.mknod(path+1, mode);
+    LOGF("Created %s with mode: %o", path, mode);
 
     RETURN(0);
 }
@@ -102,7 +115,7 @@ int MyOnDiskFS::fuseRename(const char *path, const char *newpath) {
 int MyOnDiskFS::fuseGetattr(const char *path, struct stat *statbuf) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
 
     LOGF( "\tAttributes of %s requested\n", path );
 
@@ -117,37 +130,18 @@ int MyOnDiskFS::fuseGetattr(const char *path, struct stat *statbuf) {
     }
 
     int ret = 0;
-    if (root.has(path)) {
+    if (root.hasFile(path+1)) {
         // gespeicherte Attribute zurückgeben
-        OnDiskFile& file = root.getFile(path);
+        OnDiskFile& file = root.getFile(path+1);
         *statbuf = file.getStat();
         LOGF("Permissions: %o", statbuf->st_mode);
+        // statbuf->st_mode = S_IFREG | file.getMode();
     } else {
         ret = -ENOENT;
     }
 
     RETURN(ret);
 
-    /*
-    int ret = 0;
-    auto it = files.find(path);
-    if (it != files.end()) {
-        // gespeicherte Attribute zurückgeben
-        auto& file = it->second;
-        statbuf->st_uid = file.getUserId(); // The owner of the file/directory is the user who mounted the filesystem
-        statbuf->st_gid = file.getGroupId(); // The group of the file/directory is the same as the group of the user who mounted the filesystem
-        statbuf->st_atime = file.getAtime(); // The last "a"ccess of the file/directory is right now
-        statbuf->st_mtime = file.getMtime(); // The last "m"odification of the file/directory is right now
-        statbuf->st_mode = S_IFREG | file.getMode();
-        LOGF("Permissions: %o", file.getMode());
-        statbuf->st_nlink = 1;
-        statbuf->st_size = file.getSize();
-    } else {
-        ret = -ENOENT;
-    }
-
-    RETURN(ret);
-    */
 }
 
 /// @brief Change file permissions.

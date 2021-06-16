@@ -3,6 +3,7 @@
 
 #include "OnDiskFile.h"
 
+#include <sys/types.h>
 #include <vector>
 
 class Root {
@@ -15,9 +16,12 @@ public:
     std::vector<char> serialize();
     void deserialize(std::vector<char> bytes, int containerBlocks);
 
-    bool has(std::string path) const;
+    bool isFull() const;
+    bool hasFile(std::string path) const;
     OnDiskFile& getFile(std::string path);
     std::vector<std::string> getFileList() const;
+
+    OnDiskFile& mknod(std::string path, mode_t mode);
 
 private:
     std::vector<OnDiskFile> files {std::vector<OnDiskFile>(NUM_DIR_ENTRIES)};

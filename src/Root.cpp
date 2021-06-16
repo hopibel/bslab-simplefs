@@ -47,13 +47,22 @@ void Root::deserialize(std::vector<char> bytes, int containerBlocks) {
     }
 }
 
-bool Root::has(std::string path) const {
+bool Root::hasFile(std::string path) const {
     for (auto& file : files) {
         if (file.getName() == path) {
             return true;
         }
     }
     return false;
+}
+
+bool Root::isFull() const {
+    for (auto& file : files) {
+        if (file.getName().length() == 0) {
+            return false;
+        }
+    }
+    return true;
 }
 
 OnDiskFile& Root::getFile(std::string path) {
@@ -74,4 +83,14 @@ std::vector<std::string> Root::getFileList() const {
     }
 
     return fileList;
+}
+
+OnDiskFile& Root::mknod(std::string path, mode_t mode) {
+    for (std::size_t i = 0; i < files.size(); ++i) {
+        if (files[i].getName().length() == 0) {
+            files[i] = OnDiskFile(path, mode);
+            return files[i];
+        }
+    }
+    throw std::runtime_error("No space. Please use Root::isFull() before trying to create files");
 }
