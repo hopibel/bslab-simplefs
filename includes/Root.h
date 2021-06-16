@@ -16,7 +16,7 @@ public:
     void deserialize(std::vector<char> bytes, int containerBlocks);
 
 private:
-    std::vector<OnDiskFile>  RootDir { std::vector<OnDiskFile>(64)};
+    std::vector<OnDiskFile> RootDir {std::vector<OnDiskFile>(NUM_DIR_ENTRIES)};
 };
 
 #endif // ROOT_H
