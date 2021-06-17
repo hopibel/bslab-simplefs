@@ -33,6 +33,16 @@ public:
     // use std::array so we can use array.fill(0) to reset it
     std::array<char, BLOCK_SIZE> buffer;
 
+    struct OpenFile {
+        std::array<char, BLOCK_SIZE> buffer;
+        uint32_t blockNo = END_OF_CLUSTER; // cached block
+        std::vector<uint32_t> blockList;
+
+        bool isFree = false;
+    };
+    uint32_t openFileCount = 0;
+    std::array<OpenFile, NUM_OPEN_FILES> openFiles;
+
     MyOnDiskFS();
     ~MyOnDiskFS();
 
@@ -63,6 +73,8 @@ private:
 
     std::vector<char> readFromDisk(int startBlock, int count);
     void dumpToDisk(std::vector<char> bytes, int startBlock) const;
+
+    int generateFilehandle();
 };
 
 #endif //MYFS_MYONDISKFS_H

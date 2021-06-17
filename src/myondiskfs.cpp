@@ -6,6 +6,7 @@
 #include "myondiskfs.h"
 #include "myfs-structs.h"
 #include <asm-generic/errno-base.h>
+#include <stdexcept>
 
 // For documentation of FUSE methods see https://libfuse.github.io/doxygen/structfuse__operations.html
 
@@ -186,7 +187,28 @@ int MyOnDiskFS::fuseChown(const char *path, uid_t uid, gid_t gid) {
 int MyOnDiskFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
+
+    LOGF("Opening %s", path);
+
+    // zu viele geöffnete Dateien
+    if (openFileCount >= NUM_OPEN_FILES) {
+        LOGF("Too many open files (limit %d)", NUM_OPEN_FILES);
+        RETURN(-EMFILE);
+    }
+
+    if (root.hasFile(path+1)) {
+        auto& fileMeta = root.getFile(path+1);
+        fileInfo->fh = generateFilehandle();
+        auto& openFile = openFiles[fileInfo->fh];
+        openFile.isFree = false;
+        openFile.blockList = fat.getBlockList(fileMeta.getFirstBlock());
+
+        ++openFileCount;
+    } else {
+        LOG("File not found");
+        RETURN(-ENOENT);
+    }
 
     RETURN(0);
 }
@@ -247,7 +269,18 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
 int MyOnDiskFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
+
+    // write cached block
+    if (fileInfo->fh >= 0 && fileInfo->fh < NUM_OPEN_FILES) {
+        OpenFile& opened = openFiles[fileInfo->fh];
+        blockDevice->write(opened.blockNo, opened.buffer.data());
+
+        openFileCount--;
+        opened.isFree = true;
+    } else {
+        RETURN(-ENOENT);
+    }
 
     RETURN(0);
 }
@@ -458,6 +491,15 @@ void MyOnDiskFS::dumpToDisk(std::vector<char> bytes, int startBlock) const {
     }
 
     LOGF("wrote %ld bytes", bytes.size());
+}
+
+int MyOnDiskFS::generateFilehandle() {
+    for (int i = 0; i < (int) openFiles.size(); ++i) {
+        if (openFiles[i].isFree) {
+            return i;
+        }
+    }
+    throw std::runtime_error("Ran out of free filehandles!");
 }
 
 // DO NOT EDIT ANYTHING BELOW THIS LINE!!!

@@ -18,8 +18,8 @@ void Fat::init(int containerBlocks) {
 }
 
 // Return vector of blockIDs for the file located at firstBlock.
-std::vector<int> Fat::getBlockList(int firstBlock) const {
-    std::vector<int> blocks{firstBlock};
+std::vector<uint32_t> Fat::getBlockList(uint32_t firstBlock) const {
+    std::vector<uint32_t> blocks{firstBlock};
     for (int block = firstBlock; table[block] != END_OF_CLUSTER; block = table[block]) {
         blocks.push_back(block);
     }

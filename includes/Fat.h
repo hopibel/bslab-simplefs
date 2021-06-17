@@ -1,6 +1,7 @@
 #ifndef FAT_H
 #define FAT_H
 
+#include <cstdint>
 #include <vector>
 
 class Fat {
@@ -10,7 +11,7 @@ public:
     // Initialize empty FAT for the given container size
     void init(int containerBlocks);
 
-    std::vector<int> getBlockList(int firstBlock) const;
+    std::vector<uint32_t> getBlockList(uint32_t firstBlock) const;
     void appendBlock(int firstBlock, int newBlock);
     // TODO: truncate?
 
