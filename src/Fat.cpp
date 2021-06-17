@@ -1,6 +1,7 @@
 #include "Fat.h"
 #include "myfs-structs.h"
 
+#include <cstdint>
 #include <cstring>
 #include <iterator>
 #include <vector>
@@ -13,23 +14,27 @@ int Fat::requiredBlocks(int containerBlocks) {
     return blocks_needed;
 }
 
-void Fat::init(int containerBlocks) {
-    table.resize(containerBlocks, 0);
+void Fat::init(uint32_t containerBlocks) {
+    table.resize(containerBlocks, FREE);
 }
 
 // Return vector of blockIDs for the file located at firstBlock.
 std::vector<uint32_t> Fat::getBlockList(uint32_t firstBlock) const {
-    std::vector<uint32_t> blocks{firstBlock};
-    for (int block = firstBlock; table[block] != END_OF_CLUSTER; block = table[block]) {
+    std::vector<uint32_t> blocks;
+    for (auto block = firstBlock; block != END_OF_CLUSTER; block = table[block]) {
         blocks.push_back(block);
     }
-
     return blocks;
 }
 
+// Allocate the first block of a file
+void Fat::allocateBlock(uint32_t firstBlock) {
+    table[firstBlock] = END_OF_CLUSTER;
+}
+
 // Append newBlock to file's chain.
-void Fat::appendBlock(int firstBlock, int newBlock) {
-    const int lastBlock = getLastBlock(firstBlock);
+void Fat::appendBlock(uint32_t firstBlock, uint32_t newBlock) {
+    const uint32_t lastBlock = getLastBlock(firstBlock);
     table[lastBlock] = newBlock;
     table[newBlock] = END_OF_CLUSTER;
 }
@@ -42,11 +47,11 @@ std::vector<char> Fat::serialize() {
     return bytes;
 }
 
-void Fat::deserialize(std::vector<char> bytes, int containerBlocks) {
-    if (bytes.size() / sizeof(int) != (std::size_t) containerBlocks) {
+void Fat::deserialize(std::vector<char> bytes, uint32_t containerBlocks) {
+    if (bytes.size() / sizeof(uint32_t) != (std::size_t) containerBlocks) {
         throw std::invalid_argument(
             "expected " +
-            std::to_string(containerBlocks * sizeof(int)) +
+            std::to_string(containerBlocks * sizeof(uint32_t)) +
             " bytes. received " +
             std::to_string(bytes.size())
         );
@@ -58,8 +63,8 @@ void Fat::deserialize(std::vector<char> bytes, int containerBlocks) {
     memcpy(table.data(), bytes.data(), bytes.size());
 }
 
-int Fat::getLastBlock(int firstBlock) const {
-    int block = firstBlock;
+uint32_t Fat::getLastBlock(uint32_t firstBlock) const {
+    auto block = firstBlock;
     while (table[block] != END_OF_CLUSTER) {
         block = table[block];
     }

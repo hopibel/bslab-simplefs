@@ -3,6 +3,7 @@
 #include "myfs-structs.h"
 
 #include <algorithm>
+#include <cstdint>
 #include <errno.h>
 #include <stdexcept>
 #include <string>
@@ -42,31 +43,31 @@ int Dmap::findFreeBlock() const {
     }
 }
 
-std::vector<int> Dmap::findNFreeBlocks(int n) const {
-    std::vector<int> blocks;
-    for (int i = 0; i < n; ++i) {
-        int block = findFreeBlock();
-        if (block < 0) {
-            throw std::runtime_error("Couldn't find " + std::to_string(n) + " free blocks");
-        } else {
-            blocks.push_back(block);
+std::vector<uint32_t> Dmap::findNFreeBlocks(uint32_t n) const {
+    std::vector<uint32_t> freeBlocks;
+    for (uint32_t block = 0; block < flags.size() && freeBlocks.size() < n; ++block) {
+        if (!flags[block]) {
+            freeBlocks.push_back(block);
         }
     }
+    if (freeBlocks.size() < n) {
+        throw std::runtime_error("Couldn't find " + std::to_string(n) + " free blocks");
+    }
 
-    return blocks;
+    return freeBlocks;
 }
 
-bool Dmap::isFree(int block) const {
+bool Dmap::isFree(uint32_t block) const {
     return flags[block] == false;
 }
 
 // set bit
-void Dmap::markUsed(int block) {
+void Dmap::markUsed(uint32_t block) {
     flags[block] = true;
 }
 
 // unset bit
-void Dmap::markFree(int block) {
+void Dmap::markFree(uint32_t block) {
     flags[block] = false;
 }
 
@@ -86,7 +87,7 @@ std::vector<char> Dmap::serialize() {
     return bytes;
 }
 
-void Dmap::deserialize(std::vector<char> bytes, int containerBlocks) {
+void Dmap::deserialize(std::vector<char> bytes, uint32_t containerBlocks) {
     if (bytes.size() / BLOCK_SIZE != (std::size_t) Dmap::requiredBlocks(containerBlocks)) {
         throw std::invalid_argument(
             "expected " +

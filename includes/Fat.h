@@ -9,19 +9,20 @@ public:
     static int requiredBlocks(int containerBlocks);
 
     // Initialize empty FAT for the given container size
-    void init(int containerBlocks);
+    void init(uint32_t containerBlocks);
 
     std::vector<uint32_t> getBlockList(uint32_t firstBlock) const;
-    void appendBlock(int firstBlock, int newBlock);
+    void allocateBlock(uint32_t firstBlock);
+    void appendBlock(uint32_t firstBlock, uint32_t newBlock);
     // TODO: truncate?
 
     std::vector<char> serialize();
-    void deserialize(std::vector<char> bytes, int containerBlocks);
+    void deserialize(std::vector<char> bytes, uint32_t containerBlocks);
 
 private:
-    std::vector<int> table;
+    std::vector<uint32_t> table;
 
-    int getLastBlock(int firstBlock) const;
+public:    uint32_t getLastBlock(uint32_t firstBlock) const;
 };
 
 #endif // FAT_H
