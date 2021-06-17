@@ -38,7 +38,8 @@ public:
         uint32_t blockNo = END_OF_CLUSTER; // cached block
         std::vector<uint32_t> blockList;
 
-        bool isFree = false;
+        bool isFree = true;
+        bool dirty = false;
     };
     uint32_t openFileCount = 0;
     std::array<OpenFile, NUM_OPEN_FILES> openFiles;
@@ -74,7 +75,7 @@ private:
     std::vector<char> readFromDisk(int startBlock, int count);
     void dumpToDisk(std::vector<char> bytes, int startBlock) const;
 
-    int generateFilehandle();
+    uint32_t generateFilehandle();
 };
 
 #endif //MYFS_MYONDISKFS_H

@@ -5,7 +5,9 @@
 
 #include "myondiskfs.h"
 #include "myfs-structs.h"
+#include <algorithm>
 #include <asm-generic/errno-base.h>
+#include <cstdint>
 #include <stdexcept>
 
 // For documentation of FUSE methods see https://libfuse.github.io/doxygen/structfuse__operations.html
@@ -257,8 +259,105 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
     LOGM();
 
     // TODO: [PART 2] Implement this!
+    // TODO: test writing more than 3 and >3 blocks
 
-    RETURN(0);
+    // get buffer and metadata objects
+    OpenFile& fbuf = openFiles[fileInfo->fh];
+    OnDiskFile& fmeta = root.getFile(path + 1);
+
+    // find block
+    uint32_t blockListIndex = offset / BLOCK_SIZE;
+
+    // flush current buffer if different block
+    if (blockListIndex >= fbuf.blockList.size() || fbuf.blockList[blockListIndex] != fbuf.blockNo) {
+        if (fbuf.dirty) {
+            fbuf.dirty = false;
+            blockDevice->write(fbuf.blockNo, fbuf.buffer.data());
+        }
+    }
+
+    // allocate new blocks if necessary
+    uint32_t lastBlockIndex = (offset + size - 1) / BLOCK_SIZE;
+    if (lastBlockIndex >= fbuf.blockList.size()) {
+        auto blocksNeeded = lastBlockIndex - fbuf.blockList.size() + 1;
+        std::vector<uint32_t> newBlocks;
+        try {
+            newBlocks = dmap.findNFreeBlocks(blocksNeeded+1);
+        } catch (const std::runtime_error&) {
+            return -ENOSPC;
+        }
+
+        buffer.fill(0);
+        // empty file edge case: firstBlock = END_OF_CLUSTER
+        auto it = newBlocks.begin();
+        if (fmeta.getFirstBlock() == END_OF_CLUSTER) {
+            blockDevice->write(*it, buffer.data());
+            fmeta.setFirstBlock(*it);
+            dmap.markUsed(*it);
+            fat.allocateBlock(*it);
+            ++it;
+        }
+        for (; it != newBlocks.end(); ++it) {
+            blockDevice->write(*it, buffer.data());
+            dmap.markUsed(*it);
+            fat.appendBlock(fmeta.getFirstBlock(), *it);
+        }
+        // update cached blockList
+        fbuf.blockList = fat.getBlockList(fmeta.getFirstBlock());
+    }
+
+    auto it = fbuf.blockList.begin() + blockListIndex;
+    const char* head = buf;
+    auto remainingBytes = size;
+    // write first block
+    {
+        std::size_t blockOffset = offset % BLOCK_SIZE;
+        off_t firstSize = std::min(size, BLOCK_SIZE - blockOffset);
+
+        blockDevice->read(*it, fbuf.buffer.data());
+        fbuf.blockNo = *it;
+        std::copy_n(head, firstSize, fbuf.buffer.data() + blockOffset);
+        fbuf.dirty = true;
+
+        ++it;
+        head += firstSize;
+        remainingBytes -= firstSize;
+    }
+    // write middle blocks (full blocks)
+    // flush previous block
+    if (remainingBytes > 0) {
+        blockDevice->write(fbuf.blockNo, fbuf.buffer.data());
+        fbuf.dirty = false;
+    }
+    while (remainingBytes >= BLOCK_SIZE) {
+        blockDevice->read(*it, fbuf.buffer.data());
+        fbuf.blockNo = *it;
+        std::copy_n(head, BLOCK_SIZE, fbuf.buffer.data());
+        blockDevice->write(*it, fbuf.buffer.data());
+        fbuf.dirty = false;
+
+        ++it;
+        head += BLOCK_SIZE;
+        remainingBytes -= BLOCK_SIZE;
+    }
+    // write last block (size less than a full block)
+    if (remainingBytes > 0) {
+        blockDevice->read(*it, fbuf.buffer.data());
+        fbuf.blockNo = *it;
+        std::copy_n(head, remainingBytes, fbuf.buffer.data());
+        fbuf.dirty = true;
+        // don't write yet in case of multiple writes
+    }
+
+    // metadata
+    fmeta.setMtime();
+    fmeta.setCtime();
+    fmeta.setSize(std::max(fmeta.getSize(), offset + static_cast<off_t>(size)));
+
+    // saves filesystem structures
+    writeMetadata();
+
+    RETURN(static_cast<int>(size));
 }
 
 /// @brief Close a file.
@@ -493,8 +592,8 @@ void MyOnDiskFS::dumpToDisk(std::vector<char> bytes, int startBlock) const {
     LOGF("wrote %ld bytes", bytes.size());
 }
 
-int MyOnDiskFS::generateFilehandle() {
-    for (int i = 0; i < (int) openFiles.size(); ++i) {
+uint32_t MyOnDiskFS::generateFilehandle() {
+    for (uint32_t i = 0; i < openFiles.size(); ++i) {
         if (openFiles[i].isFree) {
             return i;
         }
