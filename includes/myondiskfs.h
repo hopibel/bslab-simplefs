@@ -15,6 +15,7 @@
 #include "Root.h"
 
 #include <array>
+#include <chrono>
 
 /// @brief On-disk implementation of a simple file system.
 class MyOnDiskFS : public MyFS {
@@ -44,6 +45,8 @@ public:
     uint32_t openFileCount = 0;
     std::array<OpenFile, NUM_OPEN_FILES> openFiles;
 
+    std::chrono::system_clock::time_point lastMetadataWrite = std::chrono::system_clock::now();
+
     MyOnDiskFS();
     ~MyOnDiskFS();
 
@@ -66,6 +69,8 @@ public:
     virtual int fuseReaddir(const char *path, void *buf, fuse_fill_dir_t filler, off_t offset, struct fuse_file_info *fileInfo);
     virtual int fuseTruncate(const char *path, off_t offset, struct fuse_file_info *fileInfo);
     virtual void fuseDestroy();
+
+    virtual int fuseStatfs(const char *path, struct statvfs *statInfo);
 
     // TODO: Add methods of your file system here
 private:

@@ -7,6 +7,7 @@
 #include "myfs-structs.h"
 #include <algorithm>
 #include <asm-generic/errno-base.h>
+#include <chrono>
 #include <cstdint>
 #include <stdexcept>
 
@@ -532,6 +533,19 @@ void MyOnDiskFS::fuseDestroy() {
 
 // TODO: [PART 2] You may add your own additional methods here!
 
+// overload to show available space
+int MyOnDiskFS::fuseStatfs(const char *path, struct statvfs *statInfo) {
+    LOGM();
+
+    statInfo->f_bsize = BLOCK_SIZE;
+    statInfo->f_frsize = BLOCK_SIZE;
+    statInfo->f_blocks = superblock.getContainerSize();
+    statInfo->f_bfree = dmap.countFreeBlocks();
+    statInfo->f_bavail = statInfo->f_bfree;
+
+    return 0;
+}
+
 void MyOnDiskFS::readMetadata() {
     LOGM();
     superblock.deserialize(
@@ -568,6 +582,15 @@ std::vector<char> MyOnDiskFS::readFromDisk(int startBlock, int count) {
 }
 
 void MyOnDiskFS::writeMetadata() {
+    // skip if it has been less than 1000ms since last write
+    auto begin = lastMetadataWrite;
+    auto end = std::chrono::system_clock::now();
+    auto msSinceLastWrite = std::chrono::duration_cast<std::chrono::milliseconds>(end - begin).count();
+    lastMetadataWrite = end;
+    if (msSinceLastWrite < 1000) {
+        return;
+    }
+
     // superblock is written on creation and never changes
     dumpToDisk(dmap.serialize(), superblock.getDmapStart());
     dumpToDisk(fat.serialize(), superblock.getFatStart());

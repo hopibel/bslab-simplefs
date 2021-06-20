@@ -11,6 +11,7 @@ public:
     // Initialize empty DMAP for the given container size
     void init(int containerBlocks, int metadataBlocks);
 
+    uint32_t countFreeBlocks() const;
     int findFreeBlock() const;
     std::vector<uint32_t> findNFreeBlocks(uint32_t n) const;
     bool isFree(uint32_t block) const;

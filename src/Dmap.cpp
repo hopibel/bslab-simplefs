@@ -31,6 +31,14 @@ void Dmap::init(int containerBlocks, int metadataBlocks) {
     flags.resize(num_flags, false);
 }
 
+uint32_t Dmap::countFreeBlocks() const {
+    uint32_t n = 0;
+    for (bool b : flags) {
+        n += static_cast<int>(!b);
+    }
+    return n;
+}
+
 // Returns block id of a free block or -ENOSPC if there are none
 int Dmap::findFreeBlock() const {
     // TODO: cache locations of free blocks (contiguous regions)
