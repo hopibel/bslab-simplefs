@@ -4,6 +4,7 @@
 //
 
 #include "myondiskfs.h"
+#include "OnDiskFile.h"
 #include "myfs-structs.h"
 #include <algorithm>
 #include <asm-generic/errno-base.h>
@@ -236,9 +237,73 @@ int MyOnDiskFS::fuseOpen(const char *path, struct fuse_file_info *fileInfo) {
 int MyOnDiskFS::fuseRead(const char *path, char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
 
-    RETURN(0);
+    LOGF( "Trying to read %s, %lu, %lu\n", path, offset, size );
+
+    // load metadata, helper variables
+    OpenFile& filebuf = openFiles[fileInfo->fh];
+    OnDiskFile& filemeta = root.getFile(path+1);
+    char* head = buf; // "read head"
+
+    if (offset >= filemeta.getSize()) {
+        RETURN(0); // read past EOF: zero bytes read
+    }
+
+    // convert offset to block
+    uint32_t blockIndex = offset / BLOCK_SIZE;
+    uint32_t block = filebuf.blockList[blockIndex];
+    uint32_t maxReadable = std::min(size, static_cast<std::size_t>(filemeta.getSize()) - offset);
+    uint32_t remainingBytes = maxReadable;
+
+    // load first block using fileInfo->fh if not already cached
+    if (filebuf.blockNo != block) {
+        if (filebuf.dirty) {
+            blockDevice->write(filebuf.blockNo, filebuf.buffer.data());
+            filebuf.dirty = false;
+        }
+        blockDevice->read(block, filebuf.buffer.data());
+        filebuf.blockNo = block;
+    }
+    // calculate how many bytes to read from first block
+    uint32_t blockOffset = offset % BLOCK_SIZE;
+    uint32_t toRead = std::min(remainingBytes, static_cast<uint32_t>(BLOCK_SIZE - blockOffset));
+    memcpy(head, filebuf.buffer.data() + blockOffset, toRead);
+
+    head += toRead;
+    remainingBytes -= toRead;
+
+    // load middle blocks (full blocks)
+    while (remainingBytes > BLOCK_SIZE) {
+        // read next block directly into output buffer
+        // avoid copy to buffer -> copy to output (double copy)
+        ++blockIndex;
+        block = filebuf.blockList[blockIndex];
+        blockDevice->read(block, head);
+
+        head += BLOCK_SIZE;
+        remainingBytes -= BLOCK_SIZE;
+    }
+
+    // load last block (less than full block)
+    if (remainingBytes > 0) {
+        // read final block into cache before copying to output buffer
+        // because we might be reading less than a full block
+        ++blockIndex;
+        block = filebuf.blockList[blockIndex];
+        blockDevice->read(block, filebuf.buffer.data());
+        filebuf.blockNo = block;
+
+        toRead = remainingBytes;
+        memcpy(head, filebuf.buffer.data(), toRead);
+
+        remainingBytes -= toRead;
+    }
+
+    // update access time
+    filemeta.setAtime();
+
+    RETURN(maxReadable);
 }
 
 /// @brief Write to a file.
@@ -259,8 +324,7 @@ int MyOnDiskFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
 int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t offset, struct fuse_file_info *fileInfo) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
-    // TODO: test writing more than 3 and >3 blocks
+    // [PART 2] Implement this!
 
     // get buffer and metadata objects
     OpenFile& fbuf = openFiles[fileInfo->fh];
@@ -283,7 +347,7 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
         auto blocksNeeded = lastBlockIndex - fbuf.blockList.size() + 1;
         std::vector<uint32_t> newBlocks;
         try {
-            newBlocks = dmap.findNFreeBlocks(blocksNeeded+1);
+            newBlocks = dmap.findNFreeBlocks(blocksNeeded);
         } catch (const std::runtime_error&) {
             return -ENOSPC;
         }
@@ -374,7 +438,10 @@ int MyOnDiskFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo) {
     // write cached block
     if (fileInfo->fh >= 0 && fileInfo->fh < NUM_OPEN_FILES) {
         OpenFile& opened = openFiles[fileInfo->fh];
-        blockDevice->write(opened.blockNo, opened.buffer.data());
+        if (opened.dirty) {
+            blockDevice->write(opened.blockNo, opened.buffer.data());
+            opened.dirty = false;
+        }
 
         openFileCount--;
         opened.isFree = true;
