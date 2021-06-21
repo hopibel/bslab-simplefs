@@ -193,7 +193,18 @@ int MyOnDiskFS::fuseGetattr(const char *path, struct stat *statbuf) {
 int MyOnDiskFS::fuseChmod(const char *path, mode_t mode) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
+
+    if (!root.hasFile(path+1)) {
+        RETURN(-ENOENT);
+    }
+
+    auto& file = root.getFile(path+1);
+    mode_t oldMode = file.getStat().st_mode;
+    file.setMode(mode);
+    file.setCtime();
+
+    LOGF("Changed permissions of %s from %u to %u", path, oldMode, mode);
 
     RETURN(0);
 }
