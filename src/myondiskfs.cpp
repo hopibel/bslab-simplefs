@@ -11,6 +11,7 @@
 #include <chrono>
 #include <cstdint>
 #include <stdexcept>
+#include <sys/types.h>
 
 // For documentation of FUSE methods see https://libfuse.github.io/doxygen/structfuse__operations.html
 
@@ -220,7 +221,20 @@ int MyOnDiskFS::fuseChmod(const char *path, mode_t mode) {
 int MyOnDiskFS::fuseChown(const char *path, uid_t uid, gid_t gid) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
+
+    if (!root.hasFile(path+1)) {
+        RETURN(-ENOENT);
+    }
+
+    auto& file = root.getFile(path+1);
+    uid_t oldUid = file.getStat().st_uid;
+    gid_t oldGid = file.getStat().st_gid;
+    file.setUserId(uid);
+    file.setGroupId(gid);
+    file.setCtime();
+
+    LOGF("Changed %s ownership from %d:%d to %d:%d", path, oldUid, oldGid, uid, gid);
 
     RETURN(0);
 }
