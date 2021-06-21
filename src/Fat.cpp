@@ -71,3 +71,6 @@ uint32_t Fat::getLastBlock(uint32_t firstBlock) const {
 
     return block;
 }
+void Fat::setBlock(uint32_t entry,uint32_t  block) {
+        table[block] = entry;
+}
