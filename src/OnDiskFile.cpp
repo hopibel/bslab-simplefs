@@ -2,6 +2,7 @@
 // Created by user on 13.06.21.
 //
 #include "OnDiskFile.h"
+#include "myfs-structs.h"
 
 #include <algorithm>
 #include <unistd.h>

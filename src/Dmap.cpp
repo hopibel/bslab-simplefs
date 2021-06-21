@@ -54,7 +54,7 @@ int Dmap::findFreeBlock() const {
 std::vector<uint32_t> Dmap::findNFreeBlocks(uint32_t n) const {
     std::vector<uint32_t> freeBlocks;
     for (uint32_t block = 0; block < flags.size() && freeBlocks.size() < n; ++block) {
-        if (!flags[block]) {
+        if (isFree(block)) {
             freeBlocks.push_back(block);
         }
     }

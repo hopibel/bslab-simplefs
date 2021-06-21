@@ -22,6 +22,7 @@ public:
     std::vector<std::string> getFileList() const;
 
     OnDiskFile& mknod(std::string path, mode_t mode);
+    void unlink(std::string name);
 
 private:
     std::vector<OnDiskFile> files {std::vector<OnDiskFile>(NUM_DIR_ENTRIES)};

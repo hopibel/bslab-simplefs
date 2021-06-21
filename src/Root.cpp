@@ -94,3 +94,14 @@ OnDiskFile& Root::mknod(std::string path, mode_t mode) {
     }
     throw std::runtime_error("No space. Please use Root::isFull() before trying to create files");
 }
+
+// wipe a file from the directory (unset metadata but leave struct in place)
+void Root::unlink(std::string name) {
+    for (std::size_t i = 0; i < files.size(); ++i) {
+        if (files[i].getName() == name) {
+            files[i] = OnDiskFile(); // replace with empty metadata
+            return;
+        }
+    }
+    throw std::invalid_argument("File not found. Use Root::hasFile() before deleting");
+}

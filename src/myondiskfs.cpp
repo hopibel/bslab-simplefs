@@ -91,6 +91,24 @@ int MyOnDiskFS::fuseUnlink(const char *path) {
 
     // TODO: [PART 2] Implement this!
 
+    if (!root.hasFile(path+1)) {
+        RETURN(-ENOENT);
+    }
+
+    OnDiskFile& file = root.getFile(path+1);
+    auto blockList = fat.getBlockList(file.getFirstBlock());
+
+    // remove from Dmap
+    for (auto block : blockList) {
+        dmap.markFree(block);
+    }
+
+    // remove from Fat
+    // no need to do anything because the blocks are already marked free in Dmap
+
+    // remove from Root
+    root.unlink(path+1);
+
     RETURN(0);
 }
 
