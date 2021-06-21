@@ -89,7 +89,9 @@ int MyOnDiskFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
 int MyOnDiskFS::fuseUnlink(const char *path) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
+
+    LOGF("Unlinking %s from filesystem", path);
 
     if (!root.hasFile(path+1)) {
         RETURN(-ENOENT);
@@ -124,7 +126,21 @@ int MyOnDiskFS::fuseUnlink(const char *path) {
 int MyOnDiskFS::fuseRename(const char *path, const char *newpath) {
     LOGM();
 
-    // TODO: [PART 2] Implement this!
+    // [PART 2] Implement this!
+
+    LOGF("Rename %s to %s", path, newpath);
+
+    if (!root.hasFile(path+1)) {
+        RETURN(-ENOENT);
+    }
+
+    // unlink new path if exists
+    fuseUnlink(newpath);
+
+    // change path to new path and update ctime
+    auto& file = root.getFile(path+1);
+    file.setName(newpath+1);
+    file.setCtime();
 
     RETURN(0);
 }
