@@ -67,7 +67,7 @@ int MyOnDiskFS::fuseMknod(const char *path, mode_t mode, dev_t dev) {
     if (root.isFull()) {
         RETURN(-ENOSPC);
     }
-    if (std::string(path).length() > NAME_LENGTH){
+    if (std::string(path+1).length() > NAME_LENGTH){
         RETURN(-ENAMETOOLONG);
     }
     if (root.hasFile(path)) {
