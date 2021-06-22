@@ -12,8 +12,8 @@ public:
     void init(int containerBlocks, int metadataBlocks);
 
     uint32_t countFreeBlocks() const;
-    int findFreeBlock() const;
-    std::vector<uint32_t> findNFreeBlocks(uint32_t n) const;
+    int findFreeBlock();
+    std::vector<uint32_t> findNFreeBlocks(uint32_t n);
     bool isFree(uint32_t block) const;
     void markUsed(uint32_t block);
     void markFree(uint32_t block);
@@ -24,6 +24,7 @@ public:
 private:
     std::vector<bool> flags;
     int num_flags;
+    uint32_t nextBlock = 0;
 };
 
 #endif // DMAP_H
