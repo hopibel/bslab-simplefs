@@ -394,23 +394,26 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
             return -ENOSPC;
         }
 
-        buffer.fill(0);
         // empty file edge case: firstBlock = END_OF_CLUSTER
         auto it = newBlocks.begin();
         if (fmeta.getFirstBlock() == END_OF_CLUSTER) {
-            blockDevice->write(*it, buffer.data());
             fmeta.setFirstBlock(*it);
             dmap.markUsed(*it);
             fat.allocateBlock(*it);
+
+            // update cached blockList
+            fbuf.blockList.push_back(*it);
+
             ++it;
         }
         for (; it != newBlocks.end(); ++it) {
-            blockDevice->write(*it, buffer.data());
             dmap.markUsed(*it);
-            fat.appendBlock(fmeta.getFirstBlock(), *it);
+            fat.appendBlock(fbuf.blockList.back(), *it);
+
+            // update cached blockList
+            fbuf.blockList.push_back(*it);
         }
-        // update cached blockList
-        fbuf.blockList = fat.getBlockList(fmeta.getFirstBlock());
+        //fbuf.blockList.insert(fbuf.blockList.end(), newBlocks.begin(), newBlocks.end());
     }
 
     auto it = fbuf.blockList.begin() + blockListIndex;
@@ -432,7 +435,7 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
 
     // write middle blocks (full blocks)
     while (remainingBytes > BLOCK_SIZE) {
-        // write directly to buffer to avoid unnecessary copy
+        // write directly to block device to avoid unnecessary copy
         blockDevice->write(*it, (char*) head);
 
         ++it;
@@ -446,8 +449,6 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
         fbuf.dirty = true;
         // keep last block cached without writing
     }
-
-    flushCache(fileInfo->fh);
 
     // metadata
     fmeta.setMtime();
