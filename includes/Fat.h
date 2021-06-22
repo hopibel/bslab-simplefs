@@ -15,7 +15,7 @@ public:
     void allocateBlock(uint32_t firstBlock);
     void appendBlock(uint32_t firstBlock, uint32_t newBlock);
     // TODO: truncate?
-    void setBlock(uint32_t entry, uint32_t block);
+    void truncate(uint32_t block);
     std::vector<char> serialize();
     void deserialize(std::vector<char> bytes, uint32_t containerBlocks);
 

@@ -70,7 +70,7 @@ uint32_t Fat::getLastBlock(uint32_t firstBlock) const {
     }
 
     return block;
-}
-void Fat::setBlock(uint32_t entry,uint32_t  block) {
-        table[block] = entry;
+}// Truncate a chain to the given block
+void Fat::truncate(uint32_t block) {
+    table[block] = END_OF_CLUSTER;
 }

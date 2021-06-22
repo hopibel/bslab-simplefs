@@ -521,21 +521,25 @@ int MyOnDiskFS::fuseRelease(const char *path, struct fuse_file_info *fileInfo) {
 /// \return 0 on success, -ERRNO on failure.
 int MyOnDiskFS::fuseTruncate(const char *path, off_t newSize) {
     LOGM();
-    // Check if File exists
-    if(!root.hasFile(path+1)){
+
+    // [PART 2] Implement this!
+
+    LOGF("Truncating %s to %lu", path, newSize);
+
+    if (!root.hasFile(path+1)) {
         RETURN(ENOENT);
     }
-    OnDiskFile& fmeta = root.getFile(path + 1);
-    //Calculate Index of old Size
-    uint32_t lastBlockIndexNew = (newSize - 1) / BLOCK_SIZE;
-    //Calculate Index of new Size
-    uint32_t lastBlockIndexOld = (fmeta.getSize() - 1) / BLOCK_SIZE;
-    std::vector<uint32_t> newBlocks;
-    //File has more Blocks
-    if (lastBlockIndexOld < lastBlockIndexNew) {
-        //Get more Blocks
-        auto blocksNeeded = lastBlockIndexNew - lastBlockIndexOld;
 
+    OnDiskFile& fmeta = root.getFile(path + 1);
+    // Calculate current blocks allocated
+    uint32_t oldBlockCount = (fmeta.getSize() + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    // Calculate blocks needed for new size
+    uint32_t newBlockCount = (fmeta.getSize() + BLOCK_SIZE - 1) / BLOCK_SIZE;
+
+    // new > old: append more blocks
+    if (newBlockCount > oldBlockCount) {
+        uint32_t blocksNeeded = newBlockCount - oldBlockCount;
+        std::vector<uint32_t> newBlocks;
         try {
             newBlocks = dmap.findNFreeBlocks(blocksNeeded);
         } catch (const std::runtime_error &) {
@@ -549,51 +553,44 @@ int MyOnDiskFS::fuseTruncate(const char *path, off_t newSize) {
             fat.allocateBlock(*it);
             ++it;
         }
-        //append Blocks to Fat
+        // append rest of the blocks to Fat
         for (; it != newBlocks.end(); ++it) {
             dmap.markUsed(*it);
             fat.appendBlock(fmeta.getFirstBlock(), *it);
         }
-    }
-    //  File has less Blocks now
-    else if(lastBlockIndexOld > lastBlockIndexNew){
-        // if File had no Blocks allocated
-        if (fmeta.getFirstBlock() == END_OF_CLUSTER) {
-           auto blocksNeeded = (newSize+BLOCK_SIZE-1)/BLOCK_SIZE;
-            try {
-                newBlocks = dmap.findNFreeBlocks(blocksNeeded);
-            } catch (const std::runtime_error &) {
-                return -ENOSPC;
-            }
-            auto it = newBlocks.begin();
-            fmeta.setFirstBlock(*it);
-            dmap.markUsed(*it);
-            fat.allocateBlock(*it);
-            ++it;
-            for (; it != newBlocks.end(); ++it) {
-                dmap.markUsed(*it);
-                fat.appendBlock(fmeta.getFirstBlock(), *it);
-            }
-            // set Last Block of new File to End of Cluster
-        } else{
+    } else if (newBlockCount < oldBlockCount) {
+        // new < old: File has less Blocks
+        auto blockList = fat.getBlockList(fmeta.getFirstBlock());
 
-            auto blockFiles = fat.getBlockList(fmeta.getFirstBlock());
-            auto it = blockFiles.begin();
-            uint32_t i=0;
-            while(i<lastBlockIndexNew){
-                ++it;
-                 ++i;
-            }
-            fat.setBlock(*it,END_OF_CLUSTER);
-            while(it!=blockFiles.end()){
-                dmap.markFree(*it);
-                ++it;
-            }
+        if (newBlockCount > 0) {
+            // set new end of cluster
+            fat.truncate(blockList[newBlockCount - 1]);
+        } else {
+            // unlink entire chain
+            fmeta.setFirstBlock(END_OF_CLUSTER);
         }
-
+        // free blocks
+        for (std::size_t i = newBlockCount; i < blockList.size(); ++i) {
+            dmap.markFree(blockList[i]);
+        }
     }
+    else{
+        if (fmeta.getFirstBlock() == END_OF_CLUSTER) {
+            auto block = dmap.findNFreeBlocks(1);
+            fmeta.setFirstBlock(block[0]);
+            dmap.markUsed(block[0]);
+            fat.truncate(block[0]);
+
+        }
+    }
+
+    // update metadata
     fmeta.setSize(newSize);
-    // TODO: [PART 2] Implement this!
+    fmeta.setMtime();
+    fmeta.setCtime();
+
+    writeMetadata();
+
     RETURN(0);
 }
 
@@ -608,16 +605,29 @@ int MyOnDiskFS::fuseTruncate(const char *path, off_t newSize) {
 /// \param [in] fileInfo Can be ignored in Part 1.
 /// \return 0 on success, -ERRNO on failure.
 int MyOnDiskFS::fuseTruncate(const char *path, off_t newSize, struct fuse_file_info *fileInfo) {
-    LOGM();
+
+    // [PART 2] Implement this!
+
+    LOG("Truncating open file");
+
     OpenFile& fbuf = openFiles[fileInfo->fh];
-    OnDiskFile& fmeta = root.getFile(path + 1);
-    auto ret = MyOnDiskFS::fuseTruncate( path, newSize);
+    OnDiskFile& fmeta = root.getFile(path+1);
+
+    // flush cache
+    if (fbuf.dirty) {
+        blockDevice->write(fbuf.blockNo, fbuf.buffer.data());
+        fbuf.dirty = false;
+    }
+
+    // use closed file truncate
+    int ret = fuseTruncate(path, newSize);
+    if (ret < 0) {
+        RETURN(ret);
+    }
 
     fbuf.blockList = fat.getBlockList(fmeta.getFirstBlock());
 
-    // TODO: [PART 2] Implement this!
-
-    RETURN(ret);
+    RETURN(0);
 }
 
 /// @brief Read a directory.
