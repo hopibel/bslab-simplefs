@@ -510,7 +510,7 @@ int MyOnDiskFS::fuseTruncate(const char *path, off_t newSize) {
     // Calculate current blocks allocated
     uint32_t oldBlockCount = (fmeta.getSize() + BLOCK_SIZE - 1) / BLOCK_SIZE;
     // Calculate blocks needed for new size
-    uint32_t newBlockCount = (fmeta.getSize() + BLOCK_SIZE - 1) / BLOCK_SIZE;
+    uint32_t newBlockCount = (newSize + BLOCK_SIZE - 1) / BLOCK_SIZE;
 
     // new > old: append more blocks
     if (newBlockCount > oldBlockCount) {
@@ -548,15 +548,6 @@ int MyOnDiskFS::fuseTruncate(const char *path, off_t newSize) {
         // free blocks
         for (std::size_t i = newBlockCount; i < blockList.size(); ++i) {
             dmap.markFree(blockList[i]);
-        }
-    }
-    else{
-        if (fmeta.getFirstBlock() == END_OF_CLUSTER) {
-            auto block = dmap.findNFreeBlocks(1);
-            fmeta.setFirstBlock(block[0]);
-            dmap.markUsed(block[0]);
-            fat.truncate(block[0]);
-
         }
     }
 
