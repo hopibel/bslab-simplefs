@@ -429,13 +429,11 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
         head += firstSize;
         remainingBytes -= firstSize;
     }
+
     // write middle blocks (full blocks)
-    while (remainingBytes >= BLOCK_SIZE) {
-        // TODO: avoid double write
-        cacheBlock(*it, fileInfo->fh);
-        std::copy_n(head, BLOCK_SIZE, fbuf.buffer.data());
-        blockDevice->write(*it, fbuf.buffer.data());
-        fbuf.dirty = false;
+    while (remainingBytes > BLOCK_SIZE) {
+        // write directly to buffer to avoid unnecessary copy
+        blockDevice->write(*it, (char*) head);
 
         ++it;
         head += BLOCK_SIZE;
@@ -448,6 +446,8 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
         fbuf.dirty = true;
         // keep last block cached without writing
     }
+
+    flushCache(fileInfo->fh);
 
     // metadata
     fmeta.setMtime();
