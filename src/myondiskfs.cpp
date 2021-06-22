@@ -455,7 +455,7 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
     fmeta.setSize(std::max(fmeta.getSize(), offset + static_cast<off_t>(size)));
 
     // saves filesystem structures
-    writeMetadata();
+    syncToDisk();
 
     RETURN(static_cast<int>(size));
 }
@@ -565,7 +565,7 @@ int MyOnDiskFS::fuseTruncate(const char *path, off_t newSize) {
     fmeta.setMtime();
     fmeta.setCtime();
 
-    writeMetadata();
+    syncToDisk();
 
     RETURN(0);
 }
@@ -589,11 +589,7 @@ int MyOnDiskFS::fuseTruncate(const char *path, off_t newSize, struct fuse_file_i
     OpenFile& fbuf = openFiles[fileInfo->fh];
     OnDiskFile& fmeta = root.getFile(path+1);
 
-    // flush cache
-    if (fbuf.dirty) {
-        blockDevice->write(fbuf.blockNo, fbuf.buffer.data());
-        fbuf.dirty = false;
-    }
+    flushCache(fileInfo->fh);
 
     // use closed file truncate
     int ret = fuseTruncate(path, newSize);
@@ -692,7 +688,7 @@ void* MyOnDiskFS::fuseInit(struct fuse_conn_info *conn) {
                     if (ret < 0) {
                         LOG("Failed to write superblock");
                     }
-                    writeMetadata();
+                    syncToDisk();
                 } else {
                     LOG("Failed to preallocate container");
                 }
@@ -714,7 +710,7 @@ void MyOnDiskFS::fuseDestroy() {
     LOGM();
 
     // [PART 2] Implement this!
-    writeMetadata();
+    syncToDisk();
     blockDevice->close();
 }
 
@@ -768,7 +764,7 @@ std::vector<char> MyOnDiskFS::readFromDisk(int startBlock, int count) {
     return bytes;
 }
 
-void MyOnDiskFS::writeMetadata() {
+void MyOnDiskFS::syncToDisk() {
     // skip if it has been less than 1000ms since last write
     auto begin = lastMetadataWrite;
     auto end = std::chrono::system_clock::now();
@@ -776,6 +772,13 @@ void MyOnDiskFS::writeMetadata() {
     lastMetadataWrite = end;
     if (msSinceLastWrite < 1000) {
         return;
+    }
+
+    // write open file caches
+    for (std::size_t i = 0; i < openFiles.size(); ++i) {
+        if (!openFiles[i].isFree) {
+            flushCache(i);
+        }
     }
 
     // superblock is written on creation and never changes
@@ -829,13 +832,22 @@ void MyOnDiskFS::cacheBlock(uint32_t blockNo, uint32_t fh) {
 
     // load new block if not already cached
     if (file.blockNo != blockNo) {
-        // write old block if dirty
-        if (file.dirty) {
-            blockDevice->write(file.blockNo, file.buffer.data());
-            file.dirty = false;
-        }
+        flushCache(fh);
         blockDevice->read(blockNo, file.buffer.data());
         file.blockNo = blockNo;
+    }
+}
+
+// write dirty cache
+void MyOnDiskFS::flushCache(uint32_t fh) {
+    assert(fh < 64);
+    auto& file = openFiles[fh];
+    assert(!file.isFree);
+
+    // write cached block if dirty
+    if (file.dirty) {
+        blockDevice->write(file.blockNo, file.buffer.data());
+        file.dirty = false;
     }
 }
 

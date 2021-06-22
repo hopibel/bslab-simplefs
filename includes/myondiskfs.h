@@ -75,13 +75,14 @@ public:
     // TODO: Add methods of your file system here
 private:
     void readMetadata();
-    void writeMetadata();
+    void syncToDisk();
 
     std::vector<char> readFromDisk(int startBlock, int count);
     void dumpToDisk(std::vector<char> bytes, int startBlock) const;
 
     uint32_t generateFilehandle();
     void cacheBlock(uint32_t blockNo, uint32_t fh);
+    void flushCache(uint32_t fh);
 };
 
 #endif //MYFS_MYONDISKFS_H
