@@ -81,6 +81,7 @@ private:
     void dumpToDisk(std::vector<char> bytes, int startBlock) const;
 
     uint32_t generateFilehandle();
+    void cacheBlock(uint32_t blockNo, uint32_t fh);
 };
 
 #endif //MYFS_MYONDISKFS_H

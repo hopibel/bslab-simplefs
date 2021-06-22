@@ -6,7 +6,9 @@
 #include "myondiskfs.h"
 #include "OnDiskFile.h"
 #include "myfs-structs.h"
+
 #include <algorithm>
+#include <cassert>
 #include <asm-generic/errno-base.h>
 #include <chrono>
 #include <cstdint>
@@ -315,15 +317,7 @@ int MyOnDiskFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
     uint32_t maxReadable = std::min(size, static_cast<std::size_t>(filemeta.getSize()) - offset);
     uint32_t remainingBytes = maxReadable;
 
-    // load first block using fileInfo->fh if not already cached
-    if (filebuf.blockNo != block) {
-        if (filebuf.dirty) {
-            blockDevice->write(filebuf.blockNo, filebuf.buffer.data());
-            filebuf.dirty = false;
-        }
-        blockDevice->read(block, filebuf.buffer.data());
-        filebuf.blockNo = block;
-    }
+    cacheBlock(block, fileInfo->fh);
     // calculate how many bytes to read from first block
     uint32_t blockOffset = offset % BLOCK_SIZE;
     uint32_t toRead = std::min(remainingBytes, static_cast<uint32_t>(BLOCK_SIZE - blockOffset));
@@ -346,12 +340,9 @@ int MyOnDiskFS::fuseRead(const char *path, char *buf, size_t size, off_t offset,
 
     // load last block (less than full block)
     if (remainingBytes > 0) {
-        // read final block into cache before copying to output buffer
-        // because we might be reading less than a full block
         ++blockIndex;
         block = filebuf.blockList[blockIndex];
-        blockDevice->read(block, filebuf.buffer.data());
-        filebuf.blockNo = block;
+        cacheBlock(block, fileInfo->fh);
 
         toRead = remainingBytes;
         memcpy(head, filebuf.buffer.data(), toRead);
@@ -392,14 +383,6 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
     // find block
     uint32_t blockListIndex = offset / BLOCK_SIZE;
 
-    // flush current buffer if different block
-    if (blockListIndex >= fbuf.blockList.size() || fbuf.blockList[blockListIndex] != fbuf.blockNo) {
-        if (fbuf.dirty) {
-            fbuf.dirty = false;
-            blockDevice->write(fbuf.blockNo, fbuf.buffer.data());
-        }
-    }
-
     // allocate new blocks if necessary
     uint32_t lastBlockIndex = (offset + size - 1) / BLOCK_SIZE;
     if (lastBlockIndex >= fbuf.blockList.size()) {
@@ -438,8 +421,7 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
         std::size_t blockOffset = offset % BLOCK_SIZE;
         off_t firstSize = std::min(size, BLOCK_SIZE - blockOffset);
 
-        blockDevice->read(*it, fbuf.buffer.data());
-        fbuf.blockNo = *it;
+        cacheBlock(*it, fileInfo->fh);
         std::copy_n(head, firstSize, fbuf.buffer.data() + blockOffset);
         fbuf.dirty = true;
 
@@ -448,14 +430,9 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
         remainingBytes -= firstSize;
     }
     // write middle blocks (full blocks)
-    // flush previous block
-    if (remainingBytes > 0) {
-        blockDevice->write(fbuf.blockNo, fbuf.buffer.data());
-        fbuf.dirty = false;
-    }
     while (remainingBytes >= BLOCK_SIZE) {
-        blockDevice->read(*it, fbuf.buffer.data());
-        fbuf.blockNo = *it;
+        // TODO: avoid double write
+        cacheBlock(*it, fileInfo->fh);
         std::copy_n(head, BLOCK_SIZE, fbuf.buffer.data());
         blockDevice->write(*it, fbuf.buffer.data());
         fbuf.dirty = false;
@@ -466,11 +443,10 @@ int MyOnDiskFS::fuseWrite(const char *path, const char *buf, size_t size, off_t 
     }
     // write last block (size less than a full block)
     if (remainingBytes > 0) {
-        blockDevice->read(*it, fbuf.buffer.data());
-        fbuf.blockNo = *it;
+        cacheBlock(*it, fileInfo->fh);
         std::copy_n(head, remainingBytes, fbuf.buffer.data());
         fbuf.dirty = true;
-        // don't write yet in case of multiple writes
+        // keep last block cached without writing
     }
 
     // metadata
@@ -834,6 +810,35 @@ uint32_t MyOnDiskFS::generateFilehandle() {
     }
     throw std::runtime_error("Ran out of free filehandles!");
 }
+
+// open file block cache wrapper
+void MyOnDiskFS::cacheBlock(uint32_t blockNo, uint32_t fh) {
+    assert(fh < 64);
+    auto& file = openFiles[fh];
+    assert(!file.isFree);
+
+    // assert blockNo belongs to fh
+    bool owner = false;
+    for (auto b : file.blockList) {
+        if (b == blockNo) {
+            owner = true;
+            break;
+        }
+    }
+    assert(owner);
+
+    // load new block if not already cached
+    if (file.blockNo != blockNo) {
+        // write old block if dirty
+        if (file.dirty) {
+            blockDevice->write(file.blockNo, file.buffer.data());
+            file.dirty = false;
+        }
+        blockDevice->read(blockNo, file.buffer.data());
+        file.blockNo = blockNo;
+    }
+}
+
 
 // DO NOT EDIT ANYTHING BELOW THIS LINE!!!
 
