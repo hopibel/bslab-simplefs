@@ -728,7 +728,8 @@ void MyOnDiskFS::readMetadata() {
     );
     dmap.deserialize(
         readFromDisk(superblock.getDmapStart(), superblock.getDmapSize()),
-        superblock.getContainerSize()
+        superblock.getContainerSize(),
+        superblock.getDataStart()
     );
     fat.deserialize(
         readFromDisk(superblock.getFatStart(), superblock.getFatSize()),

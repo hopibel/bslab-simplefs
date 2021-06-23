@@ -19,11 +19,12 @@ public:
     void markFree(uint32_t block);
 
     std::vector<char> serialize();
-    void deserialize(std::vector<char> bytes, uint32_t containerBlocks);
+    void deserialize(std::vector<char> bytes, uint32_t containerBlocks, uint32_t dataStart);
 
 private:
     std::vector<bool> flags;
     int num_flags;
+    uint32_t dataStart;
     uint32_t nextBlock = 0;
 };
 

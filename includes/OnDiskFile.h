@@ -11,7 +11,7 @@
 
 class OnDiskFile {
 public:
-    OnDiskFile() = default;
+    OnDiskFile();// = default;
     OnDiskFile(std::string name, mode_t mode);
 
     char* serialize(char* buffer);

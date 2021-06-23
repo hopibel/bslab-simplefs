@@ -25,13 +25,14 @@ void Dmap::init(int containerBlocks, int metadataBlocks) {
     // save containerBlocks in case DMAP size isn't divisible by 8
     // and needs padding
     num_flags = containerBlocks;
+    dataStart = metadataBlocks;
 
     // mark metadata blocks as used
     flags.resize(metadataBlocks, true);
     flags.resize(num_flags, false);
 
     // cache index of next free block
-    nextBlock = (metadataBlocks + 1) % containerBlocks;
+    nextBlock = dataStart % containerBlocks;
 }
 
 uint32_t Dmap::countFreeBlocks() const {
@@ -61,7 +62,7 @@ int Dmap::findFreeBlock() {
         ret = firstFree - flags.begin();
     }
 
-    nextBlock = (ret + 1) % flags.size();
+    nextBlock = std::max((ret + 1) % flags.size(), static_cast<std::size_t>(dataStart));
 
     return ret;
 }
@@ -82,7 +83,7 @@ std::vector<uint32_t> Dmap::findNFreeBlocks(uint32_t n) {
 
     // update nextBlock
     if (freeBlocks.size() == n) {
-        nextBlock = block % flags.size();
+        nextBlock = std::max(block % flags.size(), static_cast<std::size_t>(dataStart));
     }
 
     // scan from beginning to old nextBlock
@@ -97,7 +98,7 @@ std::vector<uint32_t> Dmap::findNFreeBlocks(uint32_t n) {
 
     // update nextBlock
     if (block > 0) {
-        nextBlock = block % flags.size();
+        nextBlock = std::max(block % flags.size(), static_cast<std::size_t>(dataStart));
     }
 
     return freeBlocks;
@@ -133,7 +134,7 @@ std::vector<char> Dmap::serialize() {
     return bytes;
 }
 
-void Dmap::deserialize(std::vector<char> bytes, uint32_t containerBlocks) {
+void Dmap::deserialize(std::vector<char> bytes, uint32_t containerBlocks, uint32_t dataStart) {
     if (bytes.size() / BLOCK_SIZE != (std::size_t) Dmap::requiredBlocks(containerBlocks)) {
         throw std::invalid_argument(
             "expected " +
@@ -142,6 +143,8 @@ void Dmap::deserialize(std::vector<char> bytes, uint32_t containerBlocks) {
             std::to_string(bytes.size())
         );
     }
+
+    this->dataStart = dataStart;
 
     // read containerBlocks bits
     bool nextBlockCached = false;
@@ -152,7 +155,7 @@ void Dmap::deserialize(std::vector<char> bytes, uint32_t containerBlocks) {
         }
         // cache next free block id
         if (!nextBlockCached && bytes[i] != static_cast<char>(0xFF)) {
-            nextBlock = (flags.size() - 8) % containerBlocks;
+            nextBlock = flags.size() - 8;
             nextBlockCached = true;
         }
     }

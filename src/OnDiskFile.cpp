@@ -8,6 +8,20 @@
 #include <unistd.h>
 #include <string.h>
 
+OnDiskFile::OnDiskFile() {
+    name = "";
+    sstat.st_atim.tv_sec = 0;
+    sstat.st_mtim.tv_sec = 0;
+    sstat.st_ctim.tv_sec = 0;
+    sstat.st_uid = 0;
+    sstat.st_gid = 0;
+    sstat.st_mode = 0;
+
+    sstat.st_size = 0;
+    sstat.st_blocks = 0;
+    sstat.st_nlink = 0;
+}
+
 OnDiskFile::OnDiskFile(std::string name, mode_t mode) {
     this->name = name;
     sstat.st_atim.tv_sec = time(nullptr);
