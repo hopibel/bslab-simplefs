@@ -36,7 +36,8 @@ add_executable(unittests src/blockdevice.cpp
         testing/main.cpp
         testing/utest-blockdevice.cpp
         testing/utest-myfs.cpp
-        testing/tools.cpp testing/itest.cpp
+        testing/tools.cpp
+        #testing/itest.cpp
         ${SOURCES}
 )
 

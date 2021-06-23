@@ -488,3 +488,74 @@ TEST_CASE("T-1.10", "[Part_1]") {
     // remove file
     REQUIRE(unlink(FILENAME) >= 0);
 }
+
+TEST_CASE("T-2.01", "[Part_1]") {
+    printf("Testcase 2.1: Truncate an empty file to nonzero size\n");
+
+    int fd;
+
+    // remove file (just to be sure)
+    unlink(FILENAME);
+
+    // set up read & write buffer
+    char* r= new char[SMALL_SIZE];
+    memset(r, 0, SMALL_SIZE);
+    char* w= new char[SMALL_SIZE];
+    memset(w, 0, SMALL_SIZE);
+    gen_random(w, SMALL_SIZE);
+
+    // Create file
+    fd = open(FILENAME, O_EXCL | O_RDWR | O_CREAT, 0666);
+    REQUIRE(fd >= 0);
+
+    // Close file
+    REQUIRE(close(fd) >= 0);
+
+    // Open file again
+    fd = open(FILENAME, O_EXCL | O_RDWR, 0666);
+    REQUIRE(fd >= 0);
+
+    // Truncate open file
+    REQUIRE(ftruncate(fd, SMALL_SIZE) == 0);
+
+    // Write to the file
+    REQUIRE(write(fd, w, SMALL_SIZE) == SMALL_SIZE);
+
+    // Seek to beginning
+    lseek(fd, 0, SEEK_SET);
+
+    // Read from the file
+    REQUIRE(read(fd, r, SMALL_SIZE) == SMALL_SIZE);
+    REQUIRE(memcmp(r, w, SMALL_SIZE) == 0);
+
+    // Close file
+    REQUIRE(close(fd) >= 0);
+
+    // Check file size
+    struct stat s;
+    REQUIRE(stat(FILENAME, &s) == 0);
+    REQUIRE(s.st_size == SMALL_SIZE);
+
+    // remove file
+    unlink(FILENAME);
+
+    // Create file
+    fd = open(FILENAME, O_EXCL | O_RDWR | O_CREAT, 0666);
+    REQUIRE(fd >= 0);
+
+    // Close file
+    REQUIRE(close(fd) >= 0);
+
+    // Truncate closed file
+    REQUIRE(truncate(FILENAME, SMALL_SIZE/4) == 0);
+
+    // Check file size
+    REQUIRE(stat(FILENAME, &s) == 0);
+    REQUIRE(s.st_size == SMALL_SIZE/4);
+
+    // remove file
+    REQUIRE(unlink(FILENAME) >= 0);
+
+    delete [] r;
+    delete [] w;
+}
